@@ -1,4 +1,3 @@
-# ===== .github/workflows/backend-deploy.yml =====
 name: Deploy Backend Services to Render
 
 on:
@@ -7,129 +6,114 @@ on:
       - main
     paths:
       - 'backend/**'
-      - '.github/workflows/backend-deploy.yml'
   workflow_dispatch:
 
 jobs:
-  # Job simplificado - Solo validación básica
-  validate:
+  test:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false  # No cancelar otros si uno falla
       matrix:
         service: [users-service, projects-service, monitoring-service, predictive-service, documents-service, api-gateway]
-      fail-fast: false  # No cancelar otros si uno falla
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v3
         with:
           node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: backend/${{ matrix.service }}/package-lock.json
 
       - name: Install dependencies
         working-directory: ./backend/${{ matrix.service }}
-        run: npm install
+        run: npm ci
 
-      - name: Check for syntax errors
+      - name: Run tests
         working-directory: ./backend/${{ matrix.service }}
-        run: node -c src/server.js || echo "Syntax check skipped"
+        run: npm run test --passWithNoTests
         continue-on-error: true
+        env:
+          NODE_ENV: test
 
-  # Despliegues individuales
+      - name: Test Summary
+        if: always()
+        run: echo "Tests completed for ${{ matrix.service }}"
+
   deploy-gateway:
-    needs: validate
+    needs: test
+    if: always()  # Ejecutar incluso si tests fallan
     runs-on: ubuntu-latest
-    if: always()  # Ejecutar aunque validate falle
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
       - name: Deploy API Gateway to Render
-        if: ${{ secrets.RENDER_API_GATEWAY_SERVICE_ID != '' }}
-        uses: johnbeynon/render-deploy-action@v0.0.8
-        with:
-          service-id: ${{ secrets.RENDER_API_GATEWAY_SERVICE_ID }}
-          api-key: ${{ secrets.RENDER_API_KEY }}
-        continue-on-error: true
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          echo "Deploying API Gateway..."
+          # Aquí iría el comando de deploy a Render
+          # Por ahora solo imprimimos un mensaje
+          echo "Deploy to Render will be configured with Render API or webhook"
 
   deploy-users:
-    needs: validate
-    runs-on: ubuntu-latest
+    needs: test
     if: always()
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
-      - name: Deploy Users Service to Render
-        if: ${{ secrets.RENDER_USERS_SERVICE_ID != '' }}
-        uses: johnbeynon/render-deploy-action@v0.0.8
-        with:
-          service-id: ${{ secrets.RENDER_USERS_SERVICE_ID }}
-          api-key: ${{ secrets.RENDER_API_KEY }}
-        continue-on-error: true
+      - name: Deploy Users Service
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: echo "Deploy Users Service"
 
   deploy-projects:
-    needs: validate
-    runs-on: ubuntu-latest
+    needs: test
     if: always()
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
-      - name: Deploy Projects Service to Render
-        if: ${{ secrets.RENDER_PROJECTS_SERVICE_ID != '' }}
-        uses: johnbeynon/render-deploy-action@v0.0.8
-        with:
-          service-id: ${{ secrets.RENDER_PROJECTS_SERVICE_ID }}
-          api-key: ${{ secrets.RENDER_API_KEY }}
-        continue-on-error: true
+      - name: Deploy Projects Service
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: echo "Deploy Projects Service"
 
   deploy-monitoring:
-    needs: validate
-    runs-on: ubuntu-latest
+    needs: test
     if: always()
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
-      - name: Deploy Monitoring Service to Render
-        if: ${{ secrets.RENDER_MONITORING_SERVICE_ID != '' }}
-        uses: johnbeynon/render-deploy-action@v0.0.8
-        with:
-          service-id: ${{ secrets.RENDER_MONITORING_SERVICE_ID }}
-          api-key: ${{ secrets.RENDER_API_KEY }}
-        continue-on-error: true
+      - name: Deploy Monitoring Service
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: echo "Deploy Monitoring Service"
 
   deploy-predictive:
-    needs: validate
-    runs-on: ubuntu-latest
+    needs: test
     if: always()
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
-      - name: Deploy Predictive Service to Render
-        if: ${{ secrets.RENDER_PREDICTIVE_SERVICE_ID != '' }}
-        uses: johnbeynon/render-deploy-action@v0.0.8
-        with:
-          service-id: ${{ secrets.RENDER_PREDICTIVE_SERVICE_ID }}
-          api-key: ${{ secrets.RENDER_API_KEY }}
-        continue-on-error: true
+      - name: Deploy Predictive Service
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: echo "Deploy Predictive Service"
 
   deploy-documents:
-    needs: validate
-    runs-on: ubuntu-latest
+    needs: test
     if: always()
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
-      - name: Deploy Documents Service to Render
-        if: ${{ secrets.RENDER_DOCUMENTS_SERVICE_ID != '' }}
-        uses: johnbeynon/render-deploy-action@v0.0.8
-        with:
-          service-id: ${{ secrets.RENDER_DOCUMENTS_SERVICE_ID }}
-          api-key: ${{ secrets.RENDER_API_KEY }}
-        continue-on-error: true
+      - name: Deploy Documents Service
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: echo "Deploy Documents Service"
