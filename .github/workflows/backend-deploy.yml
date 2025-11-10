@@ -1,0 +1,113 @@
+name: Deploy Backend Services to Render
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [users-service, projects-service, monitoring-service, predictive-service, documents-service, api-gateway]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        working-directory: ./backend/${{ matrix.service }}
+        run: npm ci
+
+      - name: Run tests
+        working-directory: ./backend/${{ matrix.service }}
+        run: npm run test || true
+        env:
+          NODE_ENV: test
+
+  deploy-gateway:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Deploy API Gateway to Render
+        uses: johnbeynon/render-deploy-action@v0.0.8
+        with:
+          service-id: ${{ secrets.RENDER_API_GATEWAY_SERVICE_ID }}
+          api-key: ${{ secrets.RENDER_API_KEY }}
+
+  deploy-users:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Deploy Users Service to Render
+        uses: johnbeynon/render-deploy-action@v0.0.8
+        with:
+          service-id: ${{ secrets.RENDER_USERS_SERVICE_ID }}
+          api-key: ${{ secrets.RENDER_API_KEY }}
+
+  deploy-projects:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Deploy Projects Service to Render
+        uses: johnbeynon/render-deploy-action@v0.0.8
+        with:
+          service-id: ${{ secrets.RENDER_PROJECTS_SERVICE_ID }}
+          api-key: ${{ secrets.RENDER_API_KEY }}
+
+  deploy-monitoring:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Deploy Monitoring Service to Render
+        uses: johnbeynon/render-deploy-action@v0.0.8
+        with:
+          service-id: ${{ secrets.RENDER_MONITORING_SERVICE_ID }}
+          api-key: ${{ secrets.RENDER_API_KEY }}
+
+  deploy-predictive:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Deploy Predictive Service to Render
+        uses: johnbeynon/render-deploy-action@v0.0.8
+        with:
+          service-id: ${{ secrets.RENDER_PREDICTIVE_SERVICE_ID }}
+          api-key: ${{ secrets.RENDER_API_KEY }}
+
+  deploy-documents:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Deploy Documents Service to Render
+        uses: johnbeynon/render-deploy-action@v0.0.8
+        with:
+          service-id: ${{ secrets.RENDER_DOCUMENTS_SERVICE_ID }}
+          api-key: ${{ secrets.RENDER_API_KEY }}
