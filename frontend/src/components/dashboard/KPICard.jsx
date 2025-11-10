@@ -23,4 +23,3 @@ export default function KPICard({ title, value, icon: Icon, color, trend }) {
     </div>
   );
 }
-

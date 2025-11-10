@@ -1,6 +1,5 @@
-// ===== frontend/src/components/dashboard/Sidebar.jsx =====
-import { useAuth } from '../../context/AuthContext';
 import { Leaf } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 export default function Sidebar({ menuItems, activeItem, onMenuClick }) {
   const { user } = useAuth();
