@@ -16,7 +16,7 @@ export const authService = {
         console.log('⚠️ API Gateway falló, intentando directamente con Users Service...');
         
         // Si falla API Gateway, intentar directamente con Users Service
-        response = await axios.post('https://greentech-users.onrender.com/api/users/login', {
+        response = await axios.post('https://greentech-users.onrender.com/users/login', {
           email,
           password,
         }, {

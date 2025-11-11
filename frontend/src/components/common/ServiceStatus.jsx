@@ -1,13 +1,20 @@
 import { useState, useEffect } from 'react';
 import { AlertCircle, CheckCircle, Clock, Wifi, WifiOff } from 'lucide-react';
 import { apiDirect } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 
 export default function ServiceStatus() {
+  const { isAuthenticated, loading: authLoading } = useAuth();
   const [status, setStatus] = useState('checking'); // 'checking', 'online', 'waking', 'offline'
   const [lastCheck, setLastCheck] = useState(null);
   const [showStatus, setShowStatus] = useState(false);
 
   const checkServiceHealth = async () => {
+    // No check if not authenticated or still loading auth
+    if (!isAuthenticated || authLoading) {
+      return;
+    }
+
     try {
       setStatus('checking');
       const response = await apiDirect.get('/users/health', { timeout: 10000 });
@@ -17,10 +24,16 @@ export default function ServiceStatus() {
       // Auto-hide after 3 seconds if online
       setTimeout(() => setShowStatus(false), 3000);
     } catch (error) {
+      // Don't show status errors if we're not authenticated
+      if (!isAuthenticated) return;
+      
       if (error.code === 'ECONNABORTED') {
         setStatus('waking');
       } else if (error.response?.status >= 500) {
         setStatus('waking');
+      } else if (error.response?.status === 401) {
+        // Don't show status for auth errors
+        return;
       } else {
         setStatus('offline');
       }
@@ -29,18 +42,20 @@ export default function ServiceStatus() {
   };
 
   useEffect(() => {
-    // Check on component mount
-    checkServiceHealth();
+    // Only check if authenticated and not loading
+    if (isAuthenticated && !authLoading) {
+      checkServiceHealth();
+    }
     
-    // Check every 30 seconds when status is not online
+    // Check every 30 seconds when status is not online and we're authenticated
     const interval = setInterval(() => {
-      if (status !== 'online') {
+      if (status !== 'online' && isAuthenticated && !authLoading) {
         checkServiceHealth();
       }
     }, 30000);
 
     return () => clearInterval(interval);
-  }, [status]);
+  }, [status, isAuthenticated, authLoading]);
 
   // Show/hide based on status
   useEffect(() => {

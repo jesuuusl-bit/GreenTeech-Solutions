@@ -7,22 +7,47 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    const currentUser = authService.getCurrentUser();
-    setUser(currentUser);
-    setLoading(false);
+    const initializeAuth = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const currentUser = authService.getCurrentUser();
+        
+        if (token && currentUser) {
+          setUser(currentUser);
+          setIsAuthenticated(true);
+        } else {
+          // Clear invalid auth data
+          authService.logout();
+          setUser(null);
+          setIsAuthenticated(false);
+        }
+      } catch (error) {
+        console.error('Error initializing auth:', error);
+        authService.logout();
+        setUser(null);
+        setIsAuthenticated(false);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initializeAuth();
   }, []);
 
   const login = async (email, password) => {
     const response = await authService.login(email, password);
     setUser(response.data.user);
+    setIsAuthenticated(true);
     return response;
   };
 
   const logout = () => {
     authService.logout();
     setUser(null);
+    setIsAuthenticated(false);
   };
 
   const register = async (userData) => {
@@ -35,7 +60,7 @@ export const AuthProvider = ({ children }) => {
     login,
     logout,
     register,
-    isAuthenticated: authService.isAuthenticated()
+    isAuthenticated
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -48,9 +48,13 @@ api.interceptors.response.use(
   async (error) => {
     // Manejo de autenticación
     if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+      // Solo limpiar y redirigir si no estamos ya en login o register
+      if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        console.log('🔓 Token inválido, redirigiendo a login...');
+        window.location.href = '/login';
+      }
       return Promise.reject(error);
     }
 
