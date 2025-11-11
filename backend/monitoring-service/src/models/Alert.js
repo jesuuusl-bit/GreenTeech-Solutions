@@ -1,3 +1,5 @@
+const mongoose = require('mongoose');
+
 const alertSchema = new mongoose.Schema({
   plantId: {
     type: String,
