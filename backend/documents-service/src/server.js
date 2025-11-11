@@ -10,12 +10,18 @@ const app = express();
 // Conectar a base de datos
 connectDB();
 
+// Importar rutas
+const documentRoutes = require('./routes/documentRoutes');
+
 // Middlewares
 app.use(helmet());
 app.use(cors());
 app.use(morgan('combined'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// API Routes
+app.use('/api/documents', documentRoutes);
 
 // Routes
 app.get('/', (req, res) => {

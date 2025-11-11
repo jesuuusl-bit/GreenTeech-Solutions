@@ -10,12 +10,18 @@ const app = express();
 // Conectar a base de datos
 connectDB();
 
+// Importar rutas
+const predictiveRoutes = require('./routes/predictiveRoutes');
+
 // Middlewares
 app.use(helmet());
 app.use(cors());
 app.use(morgan('combined'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// API Routes
+app.use('/api/predictive', predictiveRoutes);
 
 // Routes
 app.get('/', (req, res) => {
