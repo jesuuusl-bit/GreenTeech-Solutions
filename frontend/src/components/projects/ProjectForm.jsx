@@ -251,9 +251,19 @@ export default function ProjectForm() {
         errorMessage = error.response.data.message;
       } else if (error.message) {
         errorMessage = error.message;
+      } else if (error.code === 'ECONNABORTED' || error.response?.status === 502) {
+        errorMessage = 'Los servicios están iniciándose. Por favor espera 1-2 minutos e intenta de nuevo.';
       }
       
-      toast.error(errorMessage);
+      toast.error(errorMessage, { duration: 6000 });
+      
+      // Show additional help for 502/timeout errors
+      if (error.code === 'ECONNABORTED' || error.response?.status === 502) {
+        setTimeout(() => {
+          toast.info('💡 Tip: Los servicios de Render se "duermen" por inactividad y tardan en reiniciar. Esto es normal en el plan gratuito.', 
+            { duration: 8000 });
+        }, 2000);
+      }
     } finally {
       setLoading(false);
     }

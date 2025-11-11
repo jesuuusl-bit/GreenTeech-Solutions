@@ -11,6 +11,9 @@ import Login from './components/auth/Login';
 import Register from './components/auth/Register';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 
+// Common Components
+import ServiceStatus from './components/common/ServiceStatus';
+
 // Dashboard
 import Dashboard from './components/dashboard/Dashboard';
 
@@ -99,6 +102,8 @@ export default function App() {
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </BrowserRouter>
+
+      <ServiceStatus />
 
       <Toaster 
         position="top-right"
