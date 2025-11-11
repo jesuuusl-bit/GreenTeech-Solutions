@@ -15,11 +15,22 @@ export const AuthProvider = ({ children }) => {
       try {
         debugLogger.log('🔄 Inicializando autenticación...');
         
-        // Esperar un poco para evitar race conditions con el login
-        await new Promise(resolve => setTimeout(resolve, 50));
+        // Esperar más tiempo para evitar race conditions con el login
+        await new Promise(resolve => setTimeout(resolve, 200));
         
-        const token = localStorage.getItem('token');
-        const currentUser = authService.getCurrentUser();
+        // Intentar obtener token y usuario con reintentos
+        let token = localStorage.getItem('token');
+        let currentUser = authService.getCurrentUser();
+        
+        // Si no hay datos, intentar varias veces (especialmente importante en Vercel)
+        if (!token || !currentUser) {
+          for (let i = 0; i < 3; i++) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            token = localStorage.getItem('token');
+            currentUser = authService.getCurrentUser();
+            if (token && currentUser) break;
+          }
+        }
         
         debugLogger.log('🔍 Token en localStorage:', token ? `${token.substring(0, 20)}...` : 'No encontrado');
         debugLogger.log('🔍 Usuario en localStorage:', currentUser);
@@ -32,18 +43,19 @@ export const AuthProvider = ({ children }) => {
             role: currentUser.role
           });
         } else {
-          // Solo limpiar si estamos realmente en la página de login
-          // No limpiar si acabamos de hacer login (podría ser un race condition)
           const isLoginPage = window.location.pathname.includes('/login');
           const isDashboardPage = window.location.pathname.includes('/dashboard');
           
           if (isLoginPage) {
             debugLogger.log('⚠️ En página de login, token/usuario faltante es normal');
-            setUser(null);
-            setIsAuthenticated(false);
+            // Solo limpiar si no hay ningún estado previo
+            if (!isAuthenticated) {
+              setUser(null);
+              setIsAuthenticated(false);
+            }
           } else if (isDashboardPage) {
-            debugLogger.log('⚠️ En dashboard sin token - posible re-mount, intentando recuperar estado');
-            // En dashboard sin token, intentar recuperar de una fuente alternativa
+            debugLogger.log('⚠️ En dashboard sin token - intentando recuperar de sessionStorage');
+            
             // Verificar si hay datos en sessionStorage como backup
             const sessionToken = sessionStorage.getItem('token');
             const sessionUser = sessionStorage.getItem('user');
@@ -57,28 +69,35 @@ export const AuthProvider = ({ children }) => {
               const parsedUser = JSON.parse(sessionUser);
               setUser(parsedUser);
               setIsAuthenticated(true);
+              debugLogger.success('✅ Estado recuperado desde sessionStorage');
             } else {
-              // No cambiar el estado si ya estamos autenticados, podría ser un re-mount
-              if (!isAuthenticated) {
-                debugLogger.log('⚠️ No hay backup, manteniendo estado actual');
+              // Si ya estamos autenticados, no cambiar el estado (puede ser re-mount)
+              if (isAuthenticated) {
+                debugLogger.log('✅ Manteniendo estado autenticado existente - no hay token pero el contexto indica autenticado');
+              } else {
+                debugLogger.log('⚠️ No hay backup y no hay estado previo - redirigiendo a login');
                 setUser(null);
                 setIsAuthenticated(false);
-              } else {
-                debugLogger.log('✅ Manteniendo estado autenticado existente');
               }
             }
           } else {
-            debugLogger.log('⚠️ Token o usuario faltante, limpiando datos de auth');
-            authService.logout();
-            setUser(null);
-            setIsAuthenticated(false);
+            // En otras páginas, solo limpiar si no hay estado de autenticación
+            if (!isAuthenticated) {
+              debugLogger.log('⚠️ Token o usuario faltante en página protegida, limpiando datos de auth');
+              authService.logout();
+              setUser(null);
+              setIsAuthenticated(false);
+            }
           }
         }
       } catch (error) {
         debugLogger.error('❌ Error inicializando auth', error);
-        authService.logout();
-        setUser(null);
-        setIsAuthenticated(false);
+        // Solo limpiar en caso de error si no hay estado previo
+        if (!isAuthenticated) {
+          authService.logout();
+          setUser(null);
+          setIsAuthenticated(false);
+        }
       } finally {
         setLoading(false);
         debugLogger.log('🏁 Inicialización de auth completada');
@@ -86,7 +105,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     initializeAuth();
-  }, []);
+  }, []); // No incluir isAuthenticated como dependencia para evitar loops
 
   const login = async (email, password) => {
     debugLogger.log('🔐 Iniciando login en AuthContext');
@@ -124,10 +143,21 @@ export const AuthProvider = ({ children }) => {
       // Guardar también en sessionStorage como backup para re-mounts
       sessionStorage.setItem('token', token);
       sessionStorage.setItem('user', JSON.stringify(user));
+      sessionStorage.setItem('loginTimestamp', Date.now().toString());
       debugLogger.log('💾 Backup guardado en sessionStorage');
       
-      // Verificar que el token realmente se guardó después de un pequeño delay
+      // Forzar una doble verificación de guardado para Vercel
       setTimeout(() => {
+        // Verificar y re-guardar si es necesario
+        if (!localStorage.getItem('token')) {
+          localStorage.setItem('token', token);
+          debugLogger.log('🔄 Re-guardando token en localStorage');
+        }
+        if (!localStorage.getItem('user')) {
+          localStorage.setItem('user', JSON.stringify(user));
+          debugLogger.log('🔄 Re-guardando usuario en localStorage');
+        }
+        
         const savedToken = localStorage.getItem('token');
         const savedUser = localStorage.getItem('user');
         const sessionBackup = sessionStorage.getItem('token');
@@ -138,6 +168,17 @@ export const AuthProvider = ({ children }) => {
           tokenPreview: savedToken ? savedToken.substring(0, 20) + '...' : 'No encontrado'
         });
       }, 100);
+      
+      // Segunda verificación más tardía para ambientes como Vercel
+      setTimeout(() => {
+        const finalToken = localStorage.getItem('token');
+        const finalUser = localStorage.getItem('user');
+        if (!finalToken || !finalUser) {
+          debugLogger.log('⚠️ Datos perdidos después de login, restaurando desde sessionStorage');
+          localStorage.setItem('token', sessionStorage.getItem('token'));
+          localStorage.setItem('user', sessionStorage.getItem('user'));
+        }
+      }, 500);
       
       debugLogger.success('✅ User and auth state updated in context', { 
         user: user.name || user.email,
