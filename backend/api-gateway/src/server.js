@@ -20,7 +20,7 @@ app.use(helmet());
 
 //Ajustar Cors
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'green-teech-solutions.vercel.app', // ⭐ CAMBIO AQUÍ
+  origin: process.env.FRONTEND_URL || 'https://green-teech-solutions.vercel.app', // ⭐ CAMBIO AQUÍ
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'] // ⭐ AÑADIDO POR ROBUSTEZ
 }));
