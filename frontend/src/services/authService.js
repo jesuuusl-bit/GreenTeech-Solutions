@@ -1,13 +1,26 @@
+// ===== frontend/src/services/authService.js =====
 import api from './api';
 
 export const authService = {
   login: async (email, password) => {
-    const response = await api.post('/users/login', { email, password });
-    if (response.data.success) {
-      localStorage.setItem('token', response.data.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.data.user));
+    try {
+      console.log('📡 Enviando petición de login...');
+      const response = await api.post('/users/login', { email, password });
+      console.log('📥 Respuesta recibida:', response.data);
+      
+      if (response.data.success && response.data.data) {
+        const { token, user } = response.data.data;
+        localStorage.setItem('token', token);
+        localStorage.setItem('user', JSON.stringify(user));
+        console.log('✅ Token y usuario guardados');
+        return response.data;
+      } else {
+        throw new Error('Respuesta del servidor inválida');
+      }
+    } catch (error) {
+      console.error('❌ Error en authService.login:', error);
+      throw error;
     }
-    return response.data;
   },
 
   register: async (userData) => {

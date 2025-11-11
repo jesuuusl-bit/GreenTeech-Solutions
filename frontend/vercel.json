@@ -3,6 +3,6 @@
     { "source": "/(.*)", "destination": "/" }
   ],
   "env": {
-    "VITE_API_URL": "https://your-backend-url.render.com/api"
+    "VITE_API_URL": "https://greentech-api-gateway.onrender.com/api"
   }
 }

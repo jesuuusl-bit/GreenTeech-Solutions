@@ -3,6 +3,9 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { Toaster } from 'react-hot-toast';
 
+//Herramientas Obligatorias y seleccionables
+import { Analytics } from "@vercel/analytics/react"
+
 // Auth Components
 import Login from './components/auth/Login';
 import Register from './components/auth/Register';

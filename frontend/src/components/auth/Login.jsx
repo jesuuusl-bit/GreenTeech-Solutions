@@ -23,11 +23,15 @@ export default function Login() {
     setError('');
 
     try {
-      await login(formData.email, formData.password);
+      console.log('🔐 Intentando login...', formData.email);
+      const response = await login(formData.email, formData.password);
+      console.log('✅ Login exitoso:', response);
+      
       toast.success('Inicio de sesión exitoso');
       navigate('/dashboard');
     } catch (err) {
-      const message = err.response?.data?.message || 'Error al iniciar sesión';
+      console.error('❌ Error en login:', err);
+      const message = err.response?.data?.message || err.message || 'Error al iniciar sesión';
       setError(message);
       toast.error(message);
     } finally {
