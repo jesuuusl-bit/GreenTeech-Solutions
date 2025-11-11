@@ -41,14 +41,40 @@ export const AuthProvider = ({ children }) => {
     const response = await authService.login(email, password);
     
     console.log('🔐 Login response in context:', response);
+    console.log('🔐 Full response structure:', JSON.stringify(response, null, 2));
+    
+    // Check multiple possible response structures
+    let user = null;
+    let token = null;
     
     if (response?.data?.data?.user) {
-      setUser(response.data.data.user);
+      // Structure: { data: { data: { user, token } } }
+      user = response.data.data.user;
+      token = response.data.data.token;
+      console.log('📋 Using nested data structure');
+    } else if (response?.data?.user) {
+      // Structure: { data: { user, token } }
+      user = response.data.user;
+      token = response.data.token;
+      console.log('📋 Using direct data structure');
+    } else if (response?.user) {
+      // Structure: { user, token }
+      user = response.user;
+      token = response.token;
+      console.log('📋 Using flat structure');
+    }
+    
+    if (user && token) {
+      setUser(user);
       setIsAuthenticated(true);
-      console.log('✅ User and auth state updated in context');
+      console.log('✅ User and auth state updated in context:', user);
     } else {
-      console.error('❌ Invalid response structure:', response);
-      throw new Error('Invalid response from server');
+      console.error('❌ No valid user/token found in response');
+      console.error('Available response keys:', Object.keys(response || {}));
+      if (response?.data) {
+        console.error('Available data keys:', Object.keys(response.data || {}));
+      }
+      throw new Error('Invalid response from server - no user or token found');
     }
     
     return response;

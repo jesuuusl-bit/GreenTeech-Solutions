@@ -28,16 +28,44 @@ export const authService = {
         console.log('✅ Login exitoso vía Users Service directo');
       }
       
-      console.log('📥 Respuesta recibida:', response.data);
+      console.log('📥 Respuesta recibida completa:', response);
+      console.log('📥 Response.data:', response.data);
+      console.log('📥 Response status:', response.status);
+      console.log('📥 Response headers:', response.headers);
+      
+      // Try to handle different response structures
+      let finalResponse = response.data;
+      let token = null;
+      let user = null;
       
       if (response.data.success && response.data.data) {
-        const { token, user } = response.data.data;
+        // Expected structure: { success: true, data: { token, user } }
+        token = response.data.data.token;
+        user = response.data.data.user;
+        console.log('✅ Using expected structure (success + data)');
+      } else if (response.data.token && response.data.user) {
+        // Alternative structure: { token, user }
+        token = response.data.token;
+        user = response.data.user;
+        finalResponse = { success: true, data: { token, user } };
+        console.log('✅ Using alternative structure (direct token + user)');
+      } else if (response.data.data && response.data.data.token) {
+        // Another structure: { data: { token, user } }
+        token = response.data.data.token;
+        user = response.data.data.user;
+        finalResponse = { success: true, data: { token, user } };
+        console.log('✅ Using nested data structure');
+      }
+      
+      if (token && user) {
         localStorage.setItem('token', token);
         localStorage.setItem('user', JSON.stringify(user));
-        console.log('✅ Token y usuario guardados');
-        return response.data;
+        console.log('✅ Token y usuario guardados:', { token: token.substring(0, 20) + '...', user });
+        return finalResponse;
       } else {
-        throw new Error('Respuesta del servidor inválida');
+        console.error('❌ No se encontró token o usuario en la respuesta');
+        console.error('Available keys:', Object.keys(response.data || {}));
+        throw new Error('Respuesta del servidor inválida - no contiene token o usuario');
       }
     } catch (error) {
       console.error('❌ Error en authService.login:', error);
