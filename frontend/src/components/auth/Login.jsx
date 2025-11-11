@@ -29,11 +29,19 @@ export default function Login() {
       
       toast.success('Inicio de sesión exitoso');
       
-      // Esperar un poco antes de navegar para asegurar que el estado se establezca
+      // Marcar que estamos en proceso de navegación post-login
+      sessionStorage.setItem('navigatingAfterLogin', 'true');
+      
+      // Esperar más tiempo para que el estado se estabilice completamente
       setTimeout(() => {
         console.log('🔄 Navegando a dashboard después de login exitoso');
         navigate('/dashboard', { replace: true });
-      }, 100);
+        
+        // Limpiar flag después de la navegación
+        setTimeout(() => {
+          sessionStorage.removeItem('navigatingAfterLogin');
+        }, 2000);
+      }, 200);
     } catch (err) {
       console.error('❌ Error en login:', err);
       const message = err.response?.data?.message || err.message || 'Error al iniciar sesión';

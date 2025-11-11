@@ -18,12 +18,21 @@ export default function ProtectedRoute({ children, roles = [] }) {
     return () => clearTimeout(timer);
   }, []);
 
-  // Check for recent login activity
+  // Check for recent login activity or navigation after login
   useEffect(() => {
     const loginTimestamp = sessionStorage.getItem('loginTimestamp');
-    if (loginTimestamp) {
+    const navigatingAfterLogin = sessionStorage.getItem('navigatingAfterLogin');
+    
+    if (navigatingAfterLogin === 'true') {
+      debugLogger.log('🛡️ ProtectedRoute: Navigation after login detected, forcing extended loading');
+      setForceLoading(true);
+      const timer = setTimeout(() => {
+        setForceLoading(false);
+      }, 3000); // Extended loading for navigation
+      return () => clearTimeout(timer);
+    } else if (loginTimestamp) {
       const timeSinceLogin = Date.now() - parseInt(loginTimestamp);
-      if (timeSinceLogin < 5000) { // Less than 5 seconds ago
+      if (timeSinceLogin < 7000) { // Extended window - 7 seconds
         debugLogger.log('🛡️ ProtectedRoute: Recent login detected, extending loading period');
         setForceLoading(true);
         const timer = setTimeout(() => {

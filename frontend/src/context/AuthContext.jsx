@@ -16,12 +16,19 @@ export const AuthProvider = ({ children }) => {
       try {
         debugLogger.log('🔄 Inicializando autenticación...');
         
-        // Si acabamos de hacer login, no ejecutar inicialización
+        // Si acabamos de hacer login o estamos navegando después del login, no ejecutar inicialización
         const loginTimestamp = sessionStorage.getItem('loginTimestamp');
+        const navigatingAfterLogin = sessionStorage.getItem('navigatingAfterLogin');
         const now = Date.now();
         const recentLoginTime = loginTimestamp ? (now - parseInt(loginTimestamp)) : Infinity;
         
-        if (recentLoginTime < 2000) { // Si el login fue hace menos de 2 segundos
+        if (navigatingAfterLogin === 'true') {
+          debugLogger.log('🔄 Navegación post-login detectada, saltando inicialización completamente');
+          setLoading(false);
+          return;
+        }
+        
+        if (recentLoginTime < 5000) { // Extendido a 5 segundos
           debugLogger.log('🔄 Login reciente detectado, saltando inicialización para evitar conflictos');
           setLoading(false);
           return;
