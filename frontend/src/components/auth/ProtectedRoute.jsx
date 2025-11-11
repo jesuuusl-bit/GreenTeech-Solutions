@@ -2,21 +2,39 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useState, useEffect } from 'react';
+import { debugLogger } from '../../utils/debugLogger';
 
 export default function ProtectedRoute({ children, roles = [] }) {
   const { user, loading, isAuthenticated } = useAuth();
   const [extraLoading, setExtraLoading] = useState(true);
+  const [forceLoading, setForceLoading] = useState(false);
 
   // Add extra loading time to give AuthContext time to properly initialize
   useEffect(() => {
     const timer = setTimeout(() => {
       setExtraLoading(false);
-    }, 300); // Wait a bit longer for auth to stabilize
+    }, 500); // Increased wait time
 
     return () => clearTimeout(timer);
   }, []);
 
-  if (loading || extraLoading) {
+  // Check for recent login activity
+  useEffect(() => {
+    const loginTimestamp = sessionStorage.getItem('loginTimestamp');
+    if (loginTimestamp) {
+      const timeSinceLogin = Date.now() - parseInt(loginTimestamp);
+      if (timeSinceLogin < 5000) { // Less than 5 seconds ago
+        debugLogger.log('🛡️ ProtectedRoute: Recent login detected, extending loading period');
+        setForceLoading(true);
+        const timer = setTimeout(() => {
+          setForceLoading(false);
+        }, 2000);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, []);
+
+  if (loading || extraLoading || forceLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-4 border-green-600 border-t-transparent"></div>
@@ -24,13 +42,32 @@ export default function ProtectedRoute({ children, roles = [] }) {
     );
   }
 
-  // Final fallback: check localStorage directly if context says not authenticated
+  // Enhanced fallback: check localStorage directly and restore context if needed
   if (!isAuthenticated) {
     const token = localStorage.getItem('token');
     const storedUser = localStorage.getItem('user');
+    const sessionToken = sessionStorage.getItem('token');
+    const sessionUser = sessionStorage.getItem('user');
     
-    // If we have tokens but context says not authenticated, give it more time
-    if (token && storedUser) {
+    debugLogger.log('🛡️ ProtectedRoute: Not authenticated, checking storage', {
+      hasToken: !!token,
+      hasUser: !!storedUser,
+      hasSessionToken: !!sessionToken,
+      hasSessionUser: !!sessionUser
+    });
+    
+    // If we have tokens but context says not authenticated, try to recover
+    if ((token && storedUser) || (sessionToken && sessionUser)) {
+      debugLogger.log('🛡️ ProtectedRoute: Found auth data, giving more time for context recovery');
+      
+      // Force restore from session if localStorage is empty
+      if (!token && sessionToken) {
+        localStorage.setItem('token', sessionToken);
+      }
+      if (!storedUser && sessionUser) {
+        localStorage.setItem('user', sessionUser);
+      }
+      
       return (
         <div className="min-h-screen flex items-center justify-center">
           <div className="animate-spin rounded-full h-12 w-12 border-4 border-green-600 border-t-transparent"></div>
@@ -38,6 +75,7 @@ export default function ProtectedRoute({ children, roles = [] }) {
       );
     }
     
+    debugLogger.log('🛡️ ProtectedRoute: No auth data found, redirecting to login');
     return <Navigate to="/login" replace />;
   }
 

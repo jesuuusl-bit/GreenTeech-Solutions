@@ -197,10 +197,44 @@ export const AuthProvider = ({ children }) => {
         const finalUser = localStorage.getItem('user');
         if (!finalToken || !finalUser) {
           debugLogger.log('⚠️ Datos perdidos después de login, restaurando desde sessionStorage');
-          localStorage.setItem('token', sessionStorage.getItem('token'));
-          localStorage.setItem('user', sessionStorage.getItem('user'));
+          const backupToken = sessionStorage.getItem('token');
+          const backupUser = sessionStorage.getItem('user');
+          
+          if (backupToken && backupUser) {
+            localStorage.setItem('token', backupToken);
+            localStorage.setItem('user', backupUser);
+            
+            // Forzar actualización del contexto también
+            const parsedUser = JSON.parse(backupUser);
+            setUser(parsedUser);
+            setIsAuthenticated(true);
+            debugLogger.success('✅ Estado restaurado exitosamente desde sessionStorage');
+          } else {
+            debugLogger.error('❌ No hay backup disponible en sessionStorage');
+          }
         }
       }, 500);
+      
+      // Verificación adicional más tardía para casos extremos
+      setTimeout(() => {
+        const veryFinalToken = localStorage.getItem('token');
+        const veryFinalUser = localStorage.getItem('user');
+        if (!veryFinalToken || !veryFinalUser) {
+          debugLogger.log('⚠️ Verificación adicional: Datos aún perdidos, restauración final');
+          const backupToken = sessionStorage.getItem('token');
+          const backupUser = sessionStorage.getItem('user');
+          
+          if (backupToken && backupUser) {
+            localStorage.setItem('token', backupToken);
+            localStorage.setItem('user', backupUser);
+            
+            const parsedUser = JSON.parse(backupUser);
+            setUser(parsedUser);
+            setIsAuthenticated(true);
+            debugLogger.success('✅ Restauración final exitosa');
+          }
+        }
+      }, 1500);
       
       debugLogger.success('✅ User and auth state updated in context', { 
         user: user.name || user.email,
