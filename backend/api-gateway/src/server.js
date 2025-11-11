@@ -12,31 +12,49 @@ require('dotenv').config();
 
 const app = express();
 
-//permitir varios dominios en vercel
-const allowedOrigins = [
-    // 1. Dominio de Producción Fijo
-    'https://green-teech-solutions.vercel.app',
-    // 2. Dominio de Desarrollo Local
-    'http://localhost:3000',
-    // 3. (OPCIONAL) Permitir cualquier subdominio de Vercel (menos seguro)
-    // O lista todos los dominios de preview que uses:
-    'https://green-teech-solutions-ededpvxop-jesuuusl-bits-projects.vercel.app' 
-];
-
 // ⚠️ IMPORTANTE: Configurar trust proxy para Render
 app.set('trust proxy', 1);
 
 // Seguridad y middlewares
 app.use(helmet());
-
-//Ajustar Cors --------------- process.env.FRONTEND_URL || 'https://green-teech-solutions.vercel.app',
 app.use(cors({
-    // La propiedad 'origin' ahora puede ser un array
-    origin: allowedOrigins,
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS']
+  origin: function(origin, callback) {
+    // Permitir requests sin origin (como apps móviles o Postman)
+    if (!origin) return callback(null, true);
+    
+    // Lista de orígenes permitidos
+    const allowedOrigins = [
+      'http://localhost:5173',
+      'http://localhost:3000',
+      'https://green-teech-solutions.vercel.app',
+      'green-teech-solutions-jesuuusl-bits-projects.vercel.app',
+      /https:\/\/green-teech-solutions.*\.vercel\.app$/ // Permite cualquier preview de Vercel
+    ];
+    
+    // Verificar si el origin está en la lista o coincide con el patrón
+    const isAllowed = allowedOrigins.some(allowedOrigin => {
+      if (typeof allowedOrigin === 'string') {
+        return origin === allowedOrigin;
+      }
+      if (allowedOrigin instanceof RegExp) {
+        return allowedOrigin.test(origin);
+      }
+      return false;
+    });
+    
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      console.warn(`⚠️ CORS bloqueado para origen: ${origin}`);
+      callback(new Error('No permitido por CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range'],
+  maxAge: 86400 // 24 horas
 }));
-
 app.use(compression());
 app.use(morgan('dev'));
 app.use(express.json({ limit: '10mb' }));
