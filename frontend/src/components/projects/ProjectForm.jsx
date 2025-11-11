@@ -260,7 +260,7 @@ export default function ProjectForm() {
       // Show additional help for 502/timeout errors
       if (error.code === 'ECONNABORTED' || error.response?.status === 502) {
         setTimeout(() => {
-          toast.info('💡 Tip: Los servicios de Render se "duermen" por inactividad y tardan en reiniciar. Esto es normal en el plan gratuito.', 
+          toast('💡 Tip: Los servicios de Render se "duermen" por inactividad y tardan en reiniciar. Esto es normal en el plan gratuito.', 
             { duration: 8000 });
         }, 2000);
       }
