@@ -14,6 +14,10 @@ export const AuthProvider = ({ children }) => {
     const initializeAuth = async () => {
       try {
         debugLogger.log('🔄 Inicializando autenticación...');
+        
+        // Esperar un poco para evitar race conditions con el login
+        await new Promise(resolve => setTimeout(resolve, 50));
+        
         const token = localStorage.getItem('token');
         const currentUser = authService.getCurrentUser();
         
@@ -28,9 +32,16 @@ export const AuthProvider = ({ children }) => {
             role: currentUser.role
           });
         } else {
-          // Clear invalid auth data
-          debugLogger.log('⚠️ Token o usuario faltante, limpiando datos de auth');
-          authService.logout();
+          // Solo limpiar si estamos realmente en la página de login
+          // No limpiar si acabamos de hacer login (podría ser un race condition)
+          const isLoginPage = window.location.pathname.includes('/login');
+          
+          if (isLoginPage) {
+            debugLogger.log('⚠️ En página de login, token/usuario faltante es normal');
+          } else {
+            debugLogger.log('⚠️ Token o usuario faltante, limpiando datos de auth');
+            authService.logout();
+          }
           setUser(null);
           setIsAuthenticated(false);
         }
@@ -77,8 +88,21 @@ export const AuthProvider = ({ children }) => {
     }
     
     if (user && token) {
+      // Establecer estado primero, luego verificar que se guardó correctamente
       setUser(user);
       setIsAuthenticated(true);
+      
+      // Verificar que el token realmente se guardó después de un pequeño delay
+      setTimeout(() => {
+        const savedToken = localStorage.getItem('token');
+        const savedUser = localStorage.getItem('user');
+        debugLogger.log('🔍 Verificación post-login', {
+          tokenSaved: !!savedToken,
+          userSaved: !!savedUser,
+          tokenPreview: savedToken ? savedToken.substring(0, 20) + '...' : 'No encontrado'
+        });
+      }, 100);
+      
       debugLogger.success('✅ User and auth state updated in context', { 
         user: user.name || user.email,
         isAuthenticated: true 
