@@ -80,7 +80,7 @@ const proxyRequest = async (req, res, serviceUrl) => {
 
 // ========== RUTAS DE AUTENTICACIÓN ==========
 router.post('/users/login', authLimiter, (req, res) => 
-  proxyRequest(req, res, `${services.USERS_SERVICE}/login`)
+  proxyRequest(req, res, services.USERS_SERVICE)
 );
 
 router.post('/users/register', authenticate, restrictTo('admin'), (req, res) => 
