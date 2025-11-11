@@ -12,17 +12,29 @@ require('dotenv').config();
 
 const app = express();
 
+//permitir varios dominios en vercel
+const allowedOrigins = [
+    // 1. Dominio de Producción Fijo
+    'https://green-teech-solutions.vercel.app',
+    // 2. Dominio de Desarrollo Local
+    'http://localhost:3000',
+    // 3. (OPCIONAL) Permitir cualquier subdominio de Vercel (menos seguro)
+    // O lista todos los dominios de preview que uses:
+    'https://green-teech-solutions-ededpvxop-jesuuusl-bits-projects.vercel.app' 
+];
+
 // ⚠️ IMPORTANTE: Configurar trust proxy para Render
 app.set('trust proxy', 1);
 
 // Seguridad y middlewares
 app.use(helmet());
 
-//Ajustar Cors
+//Ajustar Cors --------------- process.env.FRONTEND_URL || 'https://green-teech-solutions.vercel.app',
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'https://green-teech-solutions.vercel.app', // ⭐ CAMBIO AQUÍ
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'] // ⭐ AÑADIDO POR ROBUSTEZ
+    // La propiedad 'origin' ahora puede ser un array
+    origin: allowedOrigins,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS']
 }));
 
 app.use(compression());
