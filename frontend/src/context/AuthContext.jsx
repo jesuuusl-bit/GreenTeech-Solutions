@@ -9,11 +9,23 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [recentLogin, setRecentLogin] = useState(false);
 
   useEffect(() => {
     const initializeAuth = async () => {
       try {
         debugLogger.log('🔄 Inicializando autenticación...');
+        
+        // Si acabamos de hacer login, no ejecutar inicialización
+        const loginTimestamp = sessionStorage.getItem('loginTimestamp');
+        const now = Date.now();
+        const recentLoginTime = loginTimestamp ? (now - parseInt(loginTimestamp)) : Infinity;
+        
+        if (recentLoginTime < 2000) { // Si el login fue hace menos de 2 segundos
+          debugLogger.log('🔄 Login reciente detectado, saltando inicialización para evitar conflictos');
+          setLoading(false);
+          return;
+        }
         
         // Esperar más tiempo para evitar race conditions con el login
         await new Promise(resolve => setTimeout(resolve, 200));
@@ -136,15 +148,25 @@ export const AuthProvider = ({ children }) => {
     }
     
     if (user && token) {
+      // Marcar login reciente
+      setRecentLogin(true);
+      
       // Establecer estado primero, luego verificar que se guardó correctamente
       setUser(user);
       setIsAuthenticated(true);
       
       // Guardar también en sessionStorage como backup para re-mounts
+      const now = Date.now().toString();
       sessionStorage.setItem('token', token);
       sessionStorage.setItem('user', JSON.stringify(user));
-      sessionStorage.setItem('loginTimestamp', Date.now().toString());
-      debugLogger.log('💾 Backup guardado en sessionStorage');
+      sessionStorage.setItem('loginTimestamp', now);
+      debugLogger.log('💾 Backup guardado en sessionStorage con timestamp:', now);
+      
+      // Limpiar la flag después de un tiempo
+      setTimeout(() => {
+        setRecentLogin(false);
+        debugLogger.log('🔄 Flag de login reciente limpiada');
+      }, 3000);
       
       // Forzar una doble verificación de guardado para Vercel
       setTimeout(() => {

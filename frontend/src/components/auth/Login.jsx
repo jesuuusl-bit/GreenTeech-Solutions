@@ -28,7 +28,12 @@ export default function Login() {
       console.log('✅ Login exitoso:', response);
       
       toast.success('Inicio de sesión exitoso');
-      navigate('/dashboard');
+      
+      // Esperar un poco antes de navegar para asegurar que el estado se establezca
+      setTimeout(() => {
+        console.log('🔄 Navegando a dashboard después de login exitoso');
+        navigate('/dashboard', { replace: true });
+      }, 100);
     } catch (err) {
       console.error('❌ Error en login:', err);
       const message = err.response?.data?.message || err.message || 'Error al iniciar sesión';
