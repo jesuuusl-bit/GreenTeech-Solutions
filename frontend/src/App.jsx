@@ -13,6 +13,7 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 
 // Common Components
 import ServiceStatus from './components/common/ServiceStatus';
+import DebugPanel from './components/common/DebugPanel';
 
 // Dashboard
 import Dashboard from './components/dashboard/Dashboard';
@@ -104,6 +105,7 @@ export default function App() {
       </BrowserRouter>
 
       <ServiceStatus />
+      <DebugPanel />
 
       <Toaster 
         position="top-right"

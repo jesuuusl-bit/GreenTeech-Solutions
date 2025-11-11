@@ -1,19 +1,20 @@
 // ===== frontend/src/services/authService.js =====
 import api from './api';
 import axios from 'axios';
+import debugLogger from '../utils/debugLogger';
 
 export const authService = {
   login: async (email, password) => {
     try {
-      console.log('📡 Enviando petición de login...');
+      debugLogger.log('📡 Enviando petición de login...', { email });
       let response;
       
       try {
         // Intentar primero con API Gateway
         response = await api.post('/users/login', { email, password });
-        console.log('✅ Login exitoso vía API Gateway');
+        debugLogger.success('✅ Login exitoso vía API Gateway');
       } catch (apiGatewayError) {
-        console.log('⚠️ API Gateway falló, intentando directamente con Users Service...');
+        debugLogger.log('⚠️ API Gateway falló, intentando directamente con Users Service...', apiGatewayError.message);
         
         // Si falla API Gateway, intentar directamente con Users Service
         response = await axios.post('https://greentech-users.onrender.com/users/login', {
@@ -25,13 +26,13 @@ export const authService = {
           },
           timeout: 30000
         });
-        console.log('✅ Login exitoso vía Users Service directo');
+        debugLogger.success('✅ Login exitoso vía Users Service directo');
       }
       
-      console.log('📥 Respuesta recibida completa:', response);
-      console.log('📥 Response.data:', response.data);
-      console.log('📥 Response status:', response.status);
-      console.log('📥 Response headers:', response.headers);
+      debugLogger.log('📥 Respuesta recibida completa', response);
+      debugLogger.log('📥 Response.data', response.data);
+      debugLogger.log('📥 Response status', response.status);
+      debugLogger.log('📥 Response headers', response.headers);
       
       // Try to handle different response structures
       let finalResponse = response.data;
@@ -42,33 +43,36 @@ export const authService = {
         // Expected structure: { success: true, data: { token, user } }
         token = response.data.data.token;
         user = response.data.data.user;
-        console.log('✅ Using expected structure (success + data)');
+        debugLogger.success('✅ Using expected structure (success + data)');
       } else if (response.data.token && response.data.user) {
         // Alternative structure: { token, user }
         token = response.data.token;
         user = response.data.user;
         finalResponse = { success: true, data: { token, user } };
-        console.log('✅ Using alternative structure (direct token + user)');
+        debugLogger.success('✅ Using alternative structure (direct token + user)');
       } else if (response.data.data && response.data.data.token) {
         // Another structure: { data: { token, user } }
         token = response.data.data.token;
         user = response.data.data.user;
         finalResponse = { success: true, data: { token, user } };
-        console.log('✅ Using nested data structure');
+        debugLogger.success('✅ Using nested data structure');
       }
       
       if (token && user) {
         localStorage.setItem('token', token);
         localStorage.setItem('user', JSON.stringify(user));
-        console.log('✅ Token y usuario guardados:', { token: token.substring(0, 20) + '...', user });
+        debugLogger.success('✅ Token y usuario guardados', { 
+          token: token.substring(0, 20) + '...', 
+          user: user.name || user.email 
+        });
         return finalResponse;
       } else {
-        console.error('❌ No se encontró token o usuario en la respuesta');
-        console.error('Available keys:', Object.keys(response.data || {}));
+        debugLogger.error('❌ No se encontró token o usuario en la respuesta');
+        debugLogger.error('Available keys', Object.keys(response.data || {}));
         throw new Error('Respuesta del servidor inválida - no contiene token o usuario');
       }
     } catch (error) {
-      console.error('❌ Error en authService.login:', error);
+      debugLogger.error('❌ Error en authService.login', error);
       throw error;
     }
   },

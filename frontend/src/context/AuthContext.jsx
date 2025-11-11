@@ -1,6 +1,7 @@
 // ===== frontend/src/context/AuthContext.jsx =====
 import { createContext, useContext, useState, useEffect } from 'react';
 import { authService } from '../services/authService';
+import debugLogger from '../utils/debugLogger';
 
 const AuthContext = createContext();
 
@@ -38,10 +39,11 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (email, password) => {
+    debugLogger.log('🔐 Iniciando login en AuthContext');
     const response = await authService.login(email, password);
     
-    console.log('🔐 Login response in context:', response);
-    console.log('🔐 Full response structure:', JSON.stringify(response, null, 2));
+    debugLogger.log('🔐 Login response in context', response);
+    debugLogger.log('🔐 Full response structure', response);
     
     // Check multiple possible response structures
     let user = null;
@@ -67,12 +69,15 @@ export const AuthProvider = ({ children }) => {
     if (user && token) {
       setUser(user);
       setIsAuthenticated(true);
-      console.log('✅ User and auth state updated in context:', user);
+      debugLogger.success('✅ User and auth state updated in context', { 
+        user: user.name || user.email,
+        isAuthenticated: true 
+      });
     } else {
-      console.error('❌ No valid user/token found in response');
-      console.error('Available response keys:', Object.keys(response || {}));
+      debugLogger.error('❌ No valid user/token found in response');
+      debugLogger.error('Available response keys', Object.keys(response || {}));
       if (response?.data) {
-        console.error('Available data keys:', Object.keys(response.data || {}));
+        debugLogger.error('Available data keys', Object.keys(response.data || {}));
       }
       throw new Error('Invalid response from server - no user or token found');
     }
