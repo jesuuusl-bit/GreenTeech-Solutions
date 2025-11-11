@@ -10,7 +10,7 @@ const services = require('../config/services');
 const proxyRequest = async (req, res, serviceUrl) => {
   try {
     // Construir la URL completa
-    const targetPath = req.originalUrl.replace('/api', '/api');
+    const targetPath = req.originalUrl.replace('/api', '');
     const fullUrl = `${serviceUrl}${targetPath}`;
     
     console.log(`📡 Proxy request: ${req.method} ${fullUrl}`);
