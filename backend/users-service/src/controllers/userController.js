@@ -191,10 +191,37 @@ exports.updateUser = async (req, res) => {
 
 exports.deleteUser = async (req, res) => {
   try {
+    const user = await User.findByIdAndDelete(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'Usuario no encontrado'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Usuario eliminado correctamente'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error al eliminar usuario',
+      error: error.message
+    });
+  }
+};
+
+// Cambiar estado activo/inactivo de usuario
+exports.toggleUserStatus = async (req, res) => {
+  try {
+    const { isActive } = req.body;
+    
     const user = await User.findByIdAndUpdate(
       req.params.id,
-      { isActive: false },
-      { new: true }
+      { isActive },
+      { new: true, runValidators: true }
     );
 
     if (!user) {
@@ -206,12 +233,70 @@ exports.deleteUser = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Usuario desactivado correctamente'
+      message: `Usuario ${isActive ? 'activado' : 'desactivado'} correctamente`,
+      data: user
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Error al desactivar usuario',
+      message: 'Error al cambiar estado del usuario',
+      error: error.message
+    });
+  }
+};
+
+// Obtener estadísticas de usuarios
+exports.getUserStats = async (req, res) => {
+  try {
+    // Total de usuarios
+    const total = await User.countDocuments();
+    
+    // Usuarios activos
+    const active = await User.countDocuments({ isActive: true });
+    
+    // Usuarios por rol
+    const roleStats = await User.aggregate([
+      { $group: { _id: '$role', count: { $sum: 1 } } }
+    ]);
+    
+    // Usuarios por departamento
+    const departmentStats = await User.aggregate([
+      { $group: { _id: '$department', count: { $sum: 1 } } }
+    ]);
+    
+    // Usuarios creados en las últimas 24 horas
+    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const recentUsers = await User.countDocuments({
+      createdAt: { $gte: yesterday }
+    });
+    
+    // Formatear estadísticas por rol
+    const byRole = {};
+    roleStats.forEach(stat => {
+      byRole[stat._id] = stat.count;
+    });
+    
+    // Formatear estadísticas por departamento
+    const byDepartment = {};
+    departmentStats.forEach(stat => {
+      byDepartment[stat._id] = stat.count;
+    });
+
+    res.status(200).json({
+      success: true,
+      data: {
+        total,
+        active,
+        inactive: total - active,
+        byRole,
+        byDepartment,
+        recentUsers
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error al obtener estadísticas',
       error: error.message
     });
   }
