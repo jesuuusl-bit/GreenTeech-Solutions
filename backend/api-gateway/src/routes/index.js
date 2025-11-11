@@ -79,6 +79,7 @@ const proxyRequest = async (req, res, serviceUrl) => {
 };
 
 // ========== RUTAS DE AUTENTICACIÓN ==========
+// Fixed login route for production deployment
 router.post('/users/login', authLimiter, (req, res) => 
   proxyRequest(req, res, services.USERS_SERVICE)
 );
