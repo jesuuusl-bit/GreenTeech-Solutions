@@ -35,15 +35,25 @@ export const AuthProvider = ({ children }) => {
           // Solo limpiar si estamos realmente en la página de login
           // No limpiar si acabamos de hacer login (podría ser un race condition)
           const isLoginPage = window.location.pathname.includes('/login');
+          const isDashboardPage = window.location.pathname.includes('/dashboard');
           
           if (isLoginPage) {
             debugLogger.log('⚠️ En página de login, token/usuario faltante es normal');
+            setUser(null);
+            setIsAuthenticated(false);
+          } else if (isDashboardPage) {
+            debugLogger.log('⚠️ En dashboard sin token - posible re-mount, no limpiar automáticamente');
+            // No cambiar el estado si ya estamos autenticados, podría ser un re-mount
+            if (!isAuthenticated) {
+              setUser(null);
+              setIsAuthenticated(false);
+            }
           } else {
             debugLogger.log('⚠️ Token o usuario faltante, limpiando datos de auth');
             authService.logout();
+            setUser(null);
+            setIsAuthenticated(false);
           }
-          setUser(null);
-          setIsAuthenticated(false);
         }
       } catch (error) {
         debugLogger.error('❌ Error inicializando auth', error);
