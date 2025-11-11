@@ -122,6 +122,7 @@ export default function App() {
           },
         }}
       />
+       <Analytics />
     </AuthProvider>
   );
 }
