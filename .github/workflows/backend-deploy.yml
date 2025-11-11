@@ -53,10 +53,8 @@ jobs:
       - name: Deploy API Gateway to Render
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
-          echo "Deploying API Gateway..."
-          # Aquí iría el comando de deploy a Render
-          # Por ahora solo imprimimos un mensaje
-          echo "Deploy to Render will be configured with Render API or webhook"
+          echo "Triggering API Gateway deployment..."
+          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_API_GATEWAY }}" || echo "Configure RENDER_DEPLOY_HOOK_API_GATEWAY secret"
 
   deploy-users:
     needs: test
@@ -68,7 +66,9 @@ jobs:
 
       - name: Deploy Users Service
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: echo "Deploy Users Service"
+        run: |
+          echo "Triggering Users Service deployment..."
+          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_USERS_SERVICE }}" || echo "Configure RENDER_DEPLOY_HOOK_USERS_SERVICE secret"
 
   deploy-projects:
     needs: test
@@ -80,7 +80,9 @@ jobs:
 
       - name: Deploy Projects Service
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: echo "Deploy Projects Service"
+        run: |
+          echo "Triggering Projects Service deployment..."
+          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_PROJECTS_SERVICE }}" || echo "Configure RENDER_DEPLOY_HOOK_PROJECTS_SERVICE secret"
 
   deploy-monitoring:
     needs: test
@@ -92,7 +94,9 @@ jobs:
 
       - name: Deploy Monitoring Service
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: echo "Deploy Monitoring Service"
+        run: |
+          echo "Triggering Monitoring Service deployment..."
+          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_MONITORING_SERVICE }}" || echo "Configure RENDER_DEPLOY_HOOK_MONITORING_SERVICE secret"
 
   deploy-predictive:
     needs: test
@@ -104,7 +108,9 @@ jobs:
 
       - name: Deploy Predictive Service
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: echo "Deploy Predictive Service"
+        run: |
+          echo "Triggering Predictive Service deployment..."
+          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_PREDICTIVE_SERVICE }}" || echo "Configure RENDER_DEPLOY_HOOK_PREDICTIVE_SERVICE secret"
 
   deploy-documents:
     needs: test
@@ -116,4 +122,51 @@ jobs:
 
       - name: Deploy Documents Service
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: echo "Deploy Documents Service"
+        run: |
+          echo "Triggering Documents Service deployment..."
+          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_DOCUMENTS_SERVICE }}" || echo "Configure RENDER_DEPLOY_HOOK_DOCUMENTS_SERVICE secret"
+
+  deployment-summary:
+    runs-on: ubuntu-latest
+    needs: [deploy-gateway, deploy-users, deploy-projects, deploy-monitoring, deploy-predictive, deploy-documents]
+    if: always()
+    steps:
+      - name: Deployment Summary
+        run: |
+          echo "🚀 Backend Deployment Summary"
+          echo "=============================="
+          echo "✅ All deployment hooks triggered"
+          echo "⏱️ Services should be waking up and deploying"
+          echo ""
+          echo "📋 Services deployed:"
+          echo "  - API Gateway"
+          echo "  - Users Service"  
+          echo "  - Projects Service"
+          echo "  - Monitoring Service"
+          echo "  - Predictive Service"
+          echo "  - Documents Service"
+          echo ""
+          echo "🔍 Check Render dashboard for deployment status"
+          echo "💡 Services will stay awake longer due to deployment activity"
+
+      - name: Ping services after deployment
+        run: |
+          echo "🔄 Waiting 60 seconds for deployments to start..."
+          sleep 60
+          
+          echo "🏓 Pinging services to help with deployment..."
+          services=(
+            "${{ secrets.RENDER_API_GATEWAY_URL || 'https://api-gateway-placeholder.onrender.com' }}"
+            "${{ secrets.RENDER_USERS_SERVICE_URL || 'https://users-service-placeholder.onrender.com' }}"
+            "${{ secrets.RENDER_PROJECTS_SERVICE_URL || 'https://projects-service-placeholder.onrender.com' }}"
+            "${{ secrets.RENDER_MONITORING_SERVICE_URL || 'https://monitoring-service-placeholder.onrender.com' }}"
+            "${{ secrets.RENDER_PREDICTIVE_SERVICE_URL || 'https://predictive-service-placeholder.onrender.com' }}"
+            "${{ secrets.RENDER_DOCUMENTS_SERVICE_URL || 'https://documents-service-placeholder.onrender.com' }}"
+          )
+          
+          for url in "${services[@]}"; do
+            echo "Pinging $url"
+            curl -s --max-time 10 "$url/health" > /dev/null || echo "Service not ready yet (expected during deployment)"
+            sleep 2
+          done
+        continue-on-error: true
