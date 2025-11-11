@@ -9,7 +9,7 @@ import { Analytics } from "@vercel/analytics/react"
 // Auth Components
 import Login from './components/auth/Login';
 import Register from './components/auth/Register';
-import ProtectedRoute from './components/auth/ProtectedRoute';
+// import ProtectedRoute from './components/auth/ProtectedRoute'; // Temporarily disabled for debugging
 
 // Common Components
 import ServiceStatus from './components/common/ServiceStatus';
@@ -33,70 +33,42 @@ export default function App() {
           {/* Public Routes */}
           <Route path="/login" element={<Login />} />
           
-          {/* Protected Routes */}
+          {/* Protected Routes (Temporarily Unprotected) */}
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           
           <Route 
             path="/dashboard" 
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            } 
+            element={<Dashboard />} 
           />
 
           <Route 
             path="/projects/*" 
-            element={
-              <ProtectedRoute>
-                <ProjectsPage />
-              </ProtectedRoute>
-            } 
+            element={<ProjectsPage />} 
           />
 
           <Route 
             path="/monitoring" 
-            element={
-              <ProtectedRoute roles={['operator', 'technician', 'manager', 'admin']}>
-                <MonitoringPage />
-              </ProtectedRoute>
-            } 
+            element={<MonitoringPage />} 
           />
 
           <Route 
             path="/predictive" 
-            element={
-              <ProtectedRoute roles={['analyst', 'manager', 'admin']}>
-                <PredictivePage />
-              </ProtectedRoute>
-            } 
+            element={<PredictivePage />} 
           />
 
           <Route 
             path="/documents" 
-            element={
-              <ProtectedRoute>
-                <DocumentsPage />
-              </ProtectedRoute>
-            } 
+            element={<DocumentsPage />} 
           />
 
           <Route 
             path="/users/*" 
-            element={
-              <ProtectedRoute roles={['admin']}>
-                <UsersPage />
-              </ProtectedRoute>
-            } 
+            element={<UsersPage />} 
           />
 
           <Route 
             path="/register" 
-            element={
-              <ProtectedRoute roles={['admin']}>
-                <Register />
-              </ProtectedRoute>
-            } 
+            element={<Register />} 
           />
 
           {/* 404 */}
