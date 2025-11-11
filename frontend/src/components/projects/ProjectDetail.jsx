@@ -13,7 +13,9 @@ import {
   Target,
   TrendingUp,
   Clock,
-  CheckCircle
+  CheckCircle,
+  Home,
+  ChevronRight
 } from 'lucide-react';
 import { projectService } from '../../services/projectService';
 import toast from 'react-hot-toast';
@@ -86,7 +88,15 @@ export default function ProjectDetail() {
       navigate('/projects');
     } catch (error) {
       console.error('Error deleting project:', error);
-      toast.error('Error al eliminar el proyecto');
+      
+      let errorMessage = 'Error al eliminar el proyecto';
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      toast.error(errorMessage);
     }
   };
 
@@ -151,6 +161,28 @@ export default function ProjectDetail() {
   return (
     <div className="min-h-screen bg-slate-50 p-8">
       <div className="max-w-6xl mx-auto">
+        {/* Breadcrumb */}
+        <nav className="flex items-center space-x-2 text-sm text-gray-600 mb-6">
+          <button 
+            onClick={() => navigate('/dashboard')}
+            className="flex items-center hover:text-emerald-600 transition-colors"
+          >
+            <Home className="w-4 h-4 mr-1" />
+            Dashboard
+          </button>
+          <ChevronRight className="w-4 h-4" />
+          <button 
+            onClick={() => navigate('/projects')}
+            className="hover:text-emerald-600 transition-colors"
+          >
+            Proyectos
+          </button>
+          <ChevronRight className="w-4 h-4" />
+          <span className="text-gray-900 font-medium truncate max-w-xs">
+            {project?.name || 'Proyecto'}
+          </span>
+        </nav>
+
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
   Plus, 
   Search, 
@@ -11,7 +11,9 @@ import {
   Calendar,
   DollarSign,
   Users,
-  Activity
+  Activity,
+  Home,
+  ChevronRight
 } from 'lucide-react';
 import { projectService } from '../../services/projectService';
 import toast from 'react-hot-toast';
@@ -32,6 +34,7 @@ const priorityColors = {
 };
 
 export default function ProjectList() {
+  const navigate = useNavigate();
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -119,6 +122,19 @@ export default function ProjectList() {
   return (
     <div className="min-h-screen bg-slate-50 p-8">
       <div className="max-w-7xl mx-auto">
+        {/* Breadcrumb */}
+        <nav className="flex items-center space-x-2 text-sm text-gray-600 mb-6">
+          <button 
+            onClick={() => navigate('/dashboard')}
+            className="flex items-center hover:text-emerald-600 transition-colors"
+          >
+            <Home className="w-4 h-4 mr-1" />
+            Dashboard
+          </button>
+          <ChevronRight className="w-4 h-4" />
+          <span className="text-gray-900 font-medium">Proyectos</span>
+        </nav>
+
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div>

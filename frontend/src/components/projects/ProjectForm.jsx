@@ -8,7 +8,9 @@ import {
   MapPin,
   Users,
   AlertCircle,
-  ArrowLeft
+  ArrowLeft,
+  Home,
+  ChevronRight
 } from 'lucide-react';
 import { projectService } from '../../services/projectService';
 import toast from 'react-hot-toast';
@@ -171,18 +173,61 @@ export default function ProjectForm() {
         progress: Number(formData.progress)
       };
 
-      // Remove empty fields
-      if (!submitData.capacity.value) delete submitData.capacity;
-      if (!submitData.budget.allocated) delete submitData.budget;
+      // Remove empty fields and validate
+      if (!submitData.capacity.value) {
+        delete submitData.capacity;
+      } else if (submitData.capacity.value <= 0) {
+        toast.error('La capacidad debe ser un número positivo');
+        return;
+      }
+      
+      if (!submitData.budget.allocated) {
+        delete submitData.budget;
+      } else if (submitData.budget.allocated <= 0) {
+        toast.error('El presupuesto debe ser un número positivo');
+        return;
+      }
+      
       if (!submitData.location.coordinates.lat || !submitData.location.coordinates.lng) {
         delete submitData.location.coordinates;
+      } else {
+        // Validate coordinates
+        const lat = Number(submitData.location.coordinates.lat);
+        const lng = Number(submitData.location.coordinates.lng);
+        if (lat < -90 || lat > 90) {
+          toast.error('La latitud debe estar entre -90 y 90');
+          return;
+        }
+        if (lng < -180 || lng > 180) {
+          toast.error('La longitud debe estar entre -180 y 180');
+          return;
+        }
       }
+      
       if (!submitData.location.country && !submitData.location.region && !submitData.location.coordinates) {
         delete submitData.location;
       }
+      
+      // Validate dates
+      if (submitData.dates.start && submitData.dates.estimatedEnd) {
+        const startDate = new Date(submitData.dates.start);
+        const endDate = new Date(submitData.dates.estimatedEnd);
+        if (startDate >= endDate) {
+          toast.error('La fecha de finalización debe ser posterior a la fecha de inicio');
+          return;
+        }
+      }
+      
       if (!submitData.dates.start && !submitData.dates.estimatedEnd) {
         delete submitData.dates;
       }
+      
+      // Validate manager email
+      if (submitData.manager.email && !submitData.manager.email.includes('@')) {
+        toast.error('Por favor ingresa un email válido para el manager');
+        return;
+      }
+      
       if (!submitData.manager.name && !submitData.manager.email) {
         delete submitData.manager;
       }
@@ -198,7 +243,17 @@ export default function ProjectForm() {
       navigate('/projects');
     } catch (error) {
       console.error('Error saving project:', error);
-      toast.error(isEdit ? 'Error al actualizar el proyecto' : 'Error al crear el proyecto');
+      
+      // Better error handling
+      let errorMessage = isEdit ? 'Error al actualizar el proyecto' : 'Error al crear el proyecto';
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -219,6 +274,28 @@ export default function ProjectForm() {
   return (
     <div className="min-h-screen bg-slate-50 p-8">
       <div className="max-w-4xl mx-auto">
+        {/* Breadcrumb */}
+        <nav className="flex items-center space-x-2 text-sm text-gray-600 mb-6">
+          <button 
+            onClick={() => navigate('/dashboard')}
+            className="flex items-center hover:text-emerald-600 transition-colors"
+          >
+            <Home className="w-4 h-4 mr-1" />
+            Dashboard
+          </button>
+          <ChevronRight className="w-4 h-4" />
+          <button 
+            onClick={() => navigate('/projects')}
+            className="hover:text-emerald-600 transition-colors"
+          >
+            Proyectos
+          </button>
+          <ChevronRight className="w-4 h-4" />
+          <span className="text-gray-900 font-medium">
+            {isEdit ? 'Editar' : 'Nuevo Proyecto'}
+          </span>
+        </nav>
+
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
           <button
