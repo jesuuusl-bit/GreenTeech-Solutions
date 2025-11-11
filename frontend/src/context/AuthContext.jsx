@@ -42,11 +42,30 @@ export const AuthProvider = ({ children }) => {
             setUser(null);
             setIsAuthenticated(false);
           } else if (isDashboardPage) {
-            debugLogger.log('⚠️ En dashboard sin token - posible re-mount, no limpiar automáticamente');
-            // No cambiar el estado si ya estamos autenticados, podría ser un re-mount
-            if (!isAuthenticated) {
-              setUser(null);
-              setIsAuthenticated(false);
+            debugLogger.log('⚠️ En dashboard sin token - posible re-mount, intentando recuperar estado');
+            // En dashboard sin token, intentar recuperar de una fuente alternativa
+            // Verificar si hay datos en sessionStorage como backup
+            const sessionToken = sessionStorage.getItem('token');
+            const sessionUser = sessionStorage.getItem('user');
+            
+            if (sessionToken && sessionUser) {
+              debugLogger.log('🔄 Recuperando desde sessionStorage');
+              // Restaurar a localStorage
+              localStorage.setItem('token', sessionToken);
+              localStorage.setItem('user', sessionUser);
+              
+              const parsedUser = JSON.parse(sessionUser);
+              setUser(parsedUser);
+              setIsAuthenticated(true);
+            } else {
+              // No cambiar el estado si ya estamos autenticados, podría ser un re-mount
+              if (!isAuthenticated) {
+                debugLogger.log('⚠️ No hay backup, manteniendo estado actual');
+                setUser(null);
+                setIsAuthenticated(false);
+              } else {
+                debugLogger.log('✅ Manteniendo estado autenticado existente');
+              }
             }
           } else {
             debugLogger.log('⚠️ Token o usuario faltante, limpiando datos de auth');
@@ -102,13 +121,20 @@ export const AuthProvider = ({ children }) => {
       setUser(user);
       setIsAuthenticated(true);
       
+      // Guardar también en sessionStorage como backup para re-mounts
+      sessionStorage.setItem('token', token);
+      sessionStorage.setItem('user', JSON.stringify(user));
+      debugLogger.log('💾 Backup guardado en sessionStorage');
+      
       // Verificar que el token realmente se guardó después de un pequeño delay
       setTimeout(() => {
         const savedToken = localStorage.getItem('token');
         const savedUser = localStorage.getItem('user');
+        const sessionBackup = sessionStorage.getItem('token');
         debugLogger.log('🔍 Verificación post-login', {
           tokenSaved: !!savedToken,
           userSaved: !!savedUser,
+          sessionBackup: !!sessionBackup,
           tokenPreview: savedToken ? savedToken.substring(0, 20) + '...' : 'No encontrado'
         });
       }, 100);
@@ -133,6 +159,10 @@ export const AuthProvider = ({ children }) => {
     authService.logout();
     setUser(null);
     setIsAuthenticated(false);
+    // Limpiar también sessionStorage
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('user');
+    debugLogger.log('🗑️ Logout completo - localStorage y sessionStorage limpiados');
   };
 
   const register = async (userData) => {
