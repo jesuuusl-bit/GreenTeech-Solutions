@@ -9,27 +9,70 @@ const services = require('../config/services');
 // Función helper para proxy de requests
 const proxyRequest = async (req, res, serviceUrl) => {
   try {
+    // Construir la URL completa
+    const targetPath = req.originalUrl.replace('/api', '/api');
+    const fullUrl = `${serviceUrl}${targetPath}`;
+    
+    console.log(`📡 Proxy request: ${req.method} ${fullUrl}`);
+    
     const config = {
       method: req.method,
-      url: `${serviceUrl}${req.originalUrl.replace('/api', '/api')}`,
+      url: fullUrl,
       headers: {
         ...req.headers,
-        host: new URL(serviceUrl).host
+        host: new URL(serviceUrl).host,
+        'x-forwarded-host': req.headers.host,
+        'x-forwarded-proto': req.protocol,
+        'x-forwarded-for': req.ip
       },
-      ...(req.body && Object.keys(req.body).length > 0 && { data: req.body }),
-      ...(req.query && Object.keys(req.query).length > 0 && { params: req.query })
+      timeout: 30000, // 30 segundos
+      validateStatus: () => true // Aceptar cualquier status code
     };
 
+    // Añadir body si existe
+    if (req.body && Object.keys(req.body).length > 0) {
+      config.data = req.body;
+    }
+    
+    // Añadir query params si existen
+    if (req.query && Object.keys(req.query).length > 0) {
+      config.params = req.query;
+    }
+
     const response = await axios(config);
+    
+    // Reenviar todos los headers de respuesta
+    Object.keys(response.headers).forEach(key => {
+      res.setHeader(key, response.headers[key]);
+    });
+    
     res.status(response.status).json(response.data);
   } catch (error) {
+    console.error(`❌ Proxy error: ${error.message}`);
+    
+    if (error.code === 'ECONNREFUSED') {
+      return res.status(503).json({
+        success: false,
+        message: 'Servicio no disponible temporalmente',
+        error: 'El microservicio no está respondiendo'
+      });
+    }
+    
+    if (error.code === 'ETIMEDOUT' || error.code === 'ECONNABORTED') {
+      return res.status(504).json({
+        success: false,
+        message: 'Timeout al conectar con el servicio',
+        error: 'El servicio tardó demasiado en responder'
+      });
+    }
+    
     if (error.response) {
       res.status(error.response.status).json(error.response.data);
     } else {
       res.status(500).json({
         success: false,
         message: 'Error al comunicarse con el servicio',
-        error: error.message
+        error: process.env.NODE_ENV === 'development' ? error.message : 'Error interno'
       });
     }
   }
