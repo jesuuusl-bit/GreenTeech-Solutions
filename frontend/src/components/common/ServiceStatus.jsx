@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { AlertCircle, CheckCircle, Clock, Wifi, WifiOff } from 'lucide-react';
-import { apiDirect } from '../../services/api';
+import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 
 export default function ServiceStatus() {
@@ -17,7 +17,7 @@ export default function ServiceStatus() {
 
     try {
       setStatus('checking');
-      const response = await apiDirect.get('/users/health', { timeout: 10000 });
+      const response = await api.get('/users/health', { timeout: 10000 });
       setStatus('online');
       setLastCheck(new Date());
       
