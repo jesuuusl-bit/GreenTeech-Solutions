@@ -14,25 +14,33 @@ jobs:
       matrix:
         service:
           - name: "API Gateway"
-            url: "${{ secrets.RENDER_API_GATEWAY_URL || 'https://your-api-gateway.onrender.com' }}"
+            secret_name: "RENDER_API_GATEWAY_URL"
+            default_url: "https://your-api-gateway.onrender.com"
           - name: "Users Service" 
-            url: "${{ secrets.RENDER_USERS_SERVICE_URL || 'https://your-users-service.onrender.com' }}"
+            secret_name: "RENDER_USERS_SERVICE_URL"
+            default_url: "https://your-users-service.onrender.com"
           - name: "Projects Service"
-            url: "${{ secrets.RENDER_PROJECTS_SERVICE_URL || 'https://your-projects-service.onrender.com' }}"
+            secret_name: "RENDER_PROJECTS_SERVICE_URL"
+            default_url: "https://your-projects-service.onrender.com"
           - name: "Monitoring Service"
-            url: "${{ secrets.RENDER_MONITORING_SERVICE_URL || 'https://your-monitoring-service.onrender.com' }}"
+            secret_name: "RENDER_MONITORING_SERVICE_URL"
+            default_url: "https://your-monitoring-service.onrender.com"
           - name: "Predictive Service"
-            url: "${{ secrets.RENDER_PREDICTIVE_SERVICE_URL || 'https://your-predictive-service.onrender.com' }}"
+            secret_name: "RENDER_PREDICTIVE_SERVICE_URL"
+            default_url: "https://your-predictive-service.onrender.com"
           - name: "Documents Service"
-            url: "${{ secrets.RENDER_DOCUMENTS_SERVICE_URL || 'https://your-documents-service.onrender.com' }}"
+            secret_name: "RENDER_DOCUMENTS_SERVICE_URL"
+            default_url: "https://your-documents-service.onrender.com"
 
     steps:
       - name: Ping ${{ matrix.service.name }}
+        env:
+          SERVICE_URL: ${{ secrets[matrix.service.secret_name] || matrix.service.default_url }}
         run: |
-          echo "🔄 Pinging ${{ matrix.service.name }} at ${{ matrix.service.url }}"
+          echo "🔄 Pinging ${{ matrix.service.name }} at $SERVICE_URL"
           
           # Intentar hacer ping al servicio
-          response=$(curl -s -w "%{http_code}" -o /dev/null --max-time 30 "${{ matrix.service.url }}/health" || echo "000")
+          response=$(curl -s -w "%{http_code}" -o /dev/null --max-time 30 "$SERVICE_URL/health" || echo "000")
           
           if [ "$response" = "200" ] || [ "$response" = "404" ]; then
             echo "✅ ${{ matrix.service.name }} is alive (HTTP $response)"
@@ -42,7 +50,7 @@ jobs:
             # Intentar despertar el servicio haciendo una segunda llamada
             echo "🔄 Attempting to wake up ${{ matrix.service.name }}..."
             sleep 5
-            curl -s --max-time 30 "${{ matrix.service.url }}" > /dev/null || echo "Wake-up call sent"
+            curl -s --max-time 30 "$SERVICE_URL" > /dev/null || echo "Wake-up call sent"
           fi
         continue-on-error: true
 
@@ -52,28 +60,69 @@ jobs:
     if: github.event_name == 'workflow_dispatch'
     steps:
       - name: Trigger all service deployments
+        env:
+          HOOK_API_GATEWAY: ${{ secrets.RENDER_DEPLOY_HOOK_API_GATEWAY }}
+          HOOK_USERS_SERVICE: ${{ secrets.RENDER_DEPLOY_HOOK_USERS_SERVICE }}
+          HOOK_PROJECTS_SERVICE: ${{ secrets.RENDER_DEPLOY_HOOK_PROJECTS_SERVICE }}
+          HOOK_MONITORING_SERVICE: ${{ secrets.RENDER_DEPLOY_HOOK_MONITORING_SERVICE }}
+          HOOK_PREDICTIVE_SERVICE: ${{ secrets.RENDER_DEPLOY_HOOK_PREDICTIVE_SERVICE }}
+          HOOK_DOCUMENTS_SERVICE: ${{ secrets.RENDER_DEPLOY_HOOK_DOCUMENTS_SERVICE }}
         run: |
           echo "🚀 Triggering all service deployments to ensure they're up to date..."
           
-          # Solo ejecutar si se configuraron los secrets
-          services=(
-            "RENDER_DEPLOY_HOOK_API_GATEWAY"
-            "RENDER_DEPLOY_HOOK_USERS_SERVICE"
-            "RENDER_DEPLOY_HOOK_PROJECTS_SERVICE"
-            "RENDER_DEPLOY_HOOK_MONITORING_SERVICE"
-            "RENDER_DEPLOY_HOOK_PREDICTIVE_SERVICE"
-            "RENDER_DEPLOY_HOOK_DOCUMENTS_SERVICE"
-          )
+          # API Gateway
+          if [ ! -z "$HOOK_API_GATEWAY" ]; then
+            echo "Triggering API Gateway deployment..."
+            curl -X POST "$HOOK_API_GATEWAY" || echo "Failed to trigger API Gateway"
+            sleep 2
+          else
+            echo "⚠️ RENDER_DEPLOY_HOOK_API_GATEWAY not configured"
+          fi
           
-          for service in "${services[@]}"; do
-            if [ ! -z "${{ secrets[service] }}" ]; then
-              echo "Triggering deployment for $service"
-              curl -X POST "${{ secrets[service] }}" || echo "Failed to trigger $service"
-              sleep 2
-            else
-              echo "⚠️ $service not configured"
-            fi
-          done
+          # Users Service
+          if [ ! -z "$HOOK_USERS_SERVICE" ]; then
+            echo "Triggering Users Service deployment..."
+            curl -X POST "$HOOK_USERS_SERVICE" || echo "Failed to trigger Users Service"
+            sleep 2
+          else
+            echo "⚠️ RENDER_DEPLOY_HOOK_USERS_SERVICE not configured"
+          fi
+          
+          # Projects Service
+          if [ ! -z "$HOOK_PROJECTS_SERVICE" ]; then
+            echo "Triggering Projects Service deployment..."
+            curl -X POST "$HOOK_PROJECTS_SERVICE" || echo "Failed to trigger Projects Service"
+            sleep 2
+          else
+            echo "⚠️ RENDER_DEPLOY_HOOK_PROJECTS_SERVICE not configured"
+          fi
+          
+          # Monitoring Service
+          if [ ! -z "$HOOK_MONITORING_SERVICE" ]; then
+            echo "Triggering Monitoring Service deployment..."
+            curl -X POST "$HOOK_MONITORING_SERVICE" || echo "Failed to trigger Monitoring Service"
+            sleep 2
+          else
+            echo "⚠️ RENDER_DEPLOY_HOOK_MONITORING_SERVICE not configured"
+          fi
+          
+          # Predictive Service
+          if [ ! -z "$HOOK_PREDICTIVE_SERVICE" ]; then
+            echo "Triggering Predictive Service deployment..."
+            curl -X POST "$HOOK_PREDICTIVE_SERVICE" || echo "Failed to trigger Predictive Service"
+            sleep 2
+          else
+            echo "⚠️ RENDER_DEPLOY_HOOK_PREDICTIVE_SERVICE not configured"
+          fi
+          
+          # Documents Service
+          if [ ! -z "$HOOK_DOCUMENTS_SERVICE" ]; then
+            echo "Triggering Documents Service deployment..."
+            curl -X POST "$HOOK_DOCUMENTS_SERVICE" || echo "Failed to trigger Documents Service"
+            sleep 2
+          else
+            echo "⚠️ RENDER_DEPLOY_HOOK_DOCUMENTS_SERVICE not configured"
+          fi
 
   summary:
     runs-on: ubuntu-latest
