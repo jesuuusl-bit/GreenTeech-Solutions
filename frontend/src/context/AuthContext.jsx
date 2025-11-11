@@ -11,13 +11,12 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const logout = () => {
-    // Evitar multiples llamadas si ya se está deslogueado
     if (!localStorage.getItem('token')) return;
     
-    authService.logout(); // Limpia localStorage
+    authService.logout();
     setUser(null);
     setIsAuthenticated(false);
-    sessionStorage.clear(); // Limpiar sessionStorage por si acaso
+    sessionStorage.clear();
     debugLogger.log('🗑️ Logout complete. State and storage cleared.');
     toast.error('Tu sesión ha expirado. Por favor, inicia sesión de nuevo.');
   };
@@ -50,7 +49,6 @@ export const AuthProvider = ({ children }) => {
 
     initializeAuth();
 
-    // Listener para el evento de error de autenticación global
     const handleAuthError = () => {
       debugLogger.log('🔴 Auth error event received. Logging out.');
       logout();
@@ -58,7 +56,6 @@ export const AuthProvider = ({ children }) => {
 
     window.addEventListener('auth-error', handleAuthError);
 
-    // Limpieza del listener
     return () => {
       window.removeEventListener('auth-error', handleAuthError);
     };
@@ -75,6 +72,8 @@ export const AuthProvider = ({ children }) => {
       if (loggedInUser && token) {
         setUser(loggedInUser);
         setIsAuthenticated(true);
+        // Set timestamp for post-login grace period
+        sessionStorage.setItem('loginTimestamp', Date.now().toString());
         debugLogger.success('✅ Login successful. Context updated.', { user: loggedInUser.name });
         return response;
       } else {
