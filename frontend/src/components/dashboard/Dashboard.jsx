@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { debugAuth } from '../../utils/debugAuth';
 import { projectService } from '../../services/projectService';
 import {
   Leaf, LayoutDashboard, FolderKanban, Activity, 
@@ -10,11 +11,14 @@ import KPICard from './KPICard';
 import toast from 'react-hot-toast';
 
 export default function Dashboard() {
-  const { user, logout } = useAuth();
+  const { user, logout, isAuthenticated, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  
+  // Debug info
+  const debugInfo = debugAuth();
 
   useEffect(() => {
     loadStats();

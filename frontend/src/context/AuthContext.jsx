@@ -39,8 +39,18 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     const response = await authService.login(email, password);
-    setUser(response.data.user);
-    setIsAuthenticated(true);
+    
+    console.log('🔐 Login response in context:', response);
+    
+    if (response?.data?.data?.user) {
+      setUser(response.data.data.user);
+      setIsAuthenticated(true);
+      console.log('✅ User and auth state updated in context');
+    } else {
+      console.error('❌ Invalid response structure:', response);
+      throw new Error('Invalid response from server');
+    }
+    
     return response;
   };
 
