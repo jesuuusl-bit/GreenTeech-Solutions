@@ -1,10 +1,9 @@
-// ===== backend/users-service/src/controllers/userController.js =====
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 
-// Generar JWT
-const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
+// Generar JWT (ahora incluye el rol)
+const generateToken = (user) => {
+  return jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRE || '7d'
   });
 };
@@ -13,7 +12,6 @@ exports.register = async (req, res) => {
   try {
     const { name, email, password, role, department } = req.body;
 
-    // Verificar si el email ya existe
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({
@@ -22,7 +20,6 @@ exports.register = async (req, res) => {
       });
     }
 
-    // Solo admin puede registrar usuarios
     if (req.user && req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
@@ -87,11 +84,11 @@ exports.login = async (req, res) => {
       });
     }
 
-    // Actualizar último login
     user.lastLogin = Date.now();
     await user.save({ validateBeforeSave: false });
 
-    const token = generateToken(user._id);
+    // Pasar el objeto de usuario completo para incluir el rol en el token
+    const token = generateToken(user);
 
     res.status(200).json({
       success: true,
@@ -118,7 +115,15 @@ exports.login = async (req, res) => {
 
 exports.getProfile = async (req, res) => {
   try {
+    // El ID del usuario ahora viene directamente del token verificado por el gateway
     const user = await User.findById(req.user.id);
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'Usuario no encontrado'
+      });
+    }
     
     res.status(200).json({
       success: true,
@@ -213,7 +218,6 @@ exports.deleteUser = async (req, res) => {
   }
 };
 
-// Cambiar estado activo/inactivo de usuario
 exports.toggleUserStatus = async (req, res) => {
   try {
     const { isActive } = req.body;
@@ -245,38 +249,26 @@ exports.toggleUserStatus = async (req, res) => {
   }
 };
 
-// Obtener estadísticas de usuarios
 exports.getUserStats = async (req, res) => {
   try {
-    // Total de usuarios
     const total = await User.countDocuments();
-    
-    // Usuarios activos
     const active = await User.countDocuments({ isActive: true });
-    
-    // Usuarios por rol
     const roleStats = await User.aggregate([
       { $group: { _id: '$role', count: { $sum: 1 } } }
     ]);
-    
-    // Usuarios por departamento
     const departmentStats = await User.aggregate([
       { $group: { _id: '$department', count: { $sum: 1 } } }
     ]);
-    
-    // Usuarios creados en las últimas 24 horas
     const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
     const recentUsers = await User.countDocuments({
       createdAt: { $gte: yesterday }
     });
     
-    // Formatear estadísticas por rol
     const byRole = {};
     roleStats.forEach(stat => {
       byRole[stat._id] = stat.count;
     });
     
-    // Formatear estadísticas por departamento
     const byDepartment = {};
     departmentStats.forEach(stat => {
       byDepartment[stat._id] = stat.count;
