@@ -16,56 +16,27 @@ api.interceptors.request.use(
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-      console.log(`📤 Request to ${config.url} with token: ${token.substring(0, 20)}...`);
-    } else {
-      console.log(`📤 Request to ${config.url} without token`);
     }
     return config;
   },
   (error) => Promise.reject(error)
 );
 
-// Función para retry automático
-const retry = async (fn, retries = 1, delay = 3000) => {
-  try {
-    return await fn();
-  } catch (error) {
-    // No retry para errores de rate limiting
-    if (error.response?.status === 429) {
-      throw error;
-    }
-    
-    // Solo retry para errores de servidor y timeouts
-    if (retries > 0 && (error.code === 'ECONNABORTED' || error.response?.status >= 500)) {
-      console.log(`🔄 Reintentando request... (${retries} intentos restantes)`);
-      await new Promise(resolve => setTimeout(resolve, delay));
-      return retry(fn, retries - 1, delay * 2);
-    }
-    throw error;
-  }
-};
-
 // Interceptor para manejar errores de respuesta
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    // Manejo de autenticación
-    if (error.response?.status === 401) {
-      // Solo limpiar y redirigir si no estamos ya en login o register
-      // Y si no es una petición de estadísticas (que puede fallar por servicios dormidos)
-      const isStatsRequest = error.config?.url?.includes('/projects/stats');
+    const originalRequest = error.config;
+
+    // Manejo de autenticación - Error 401
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true; // Prevenir bucles de reintento infinitos
       
-      if (!window.location.pathname.includes('/login') && 
-          !window.location.pathname.includes('/register') &&
-          !isStatsRequest) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        console.log('🔓 Token inválido, redirigiendo a login...');
-        window.location.href = '/login';
-      } else if (isStatsRequest) {
-        console.log('⚠️ Error 401 en stats - probablemente servicio dormido, no redirigiendo');
-      }
-      return Promise.reject(error);
+      console.error('🔴 Error 401: Token inválido o expirado.');
+      
+      // Disparar un evento global para que el AuthContext maneje el logout.
+      // Esto desacopla la lógica de API de la navegación.
+      window.dispatchEvent(new CustomEvent('auth-error'));
     }
 
     // Manejo de errores de servidor y timeouts
@@ -73,26 +44,12 @@ api.interceptors.response.use(
       error.message = 'El servidor está tardando en responder. Los servicios pueden estar iniciándose. Por favor, espera un momento e intenta de nuevo.';
     } else if (error.response?.status === 429) {
       error.message = 'Demasiadas solicitudes. Por favor espera unos segundos antes de intentar de nuevo.';
-    } else if (error.response?.status === 502) {
-      error.message = 'Error de conexión con el servidor. Los servicios pueden estar iniciándose. Intenta de nuevo en unos segundos.';
-    } else if (error.response?.status === 503) {
-      error.message = 'Servicio temporalmente no disponible. Los servicios están iniciándose, intenta de nuevo en unos segundos.';
-    } else if (error.response?.status === 504) {
-      error.message = 'El servidor tardó demasiado en responder. Los servicios pueden estar iniciándose.';
+    } else if (error.response?.status >= 500) {
+      error.message = 'Error de conexión con el servidor. Los servicios pueden estar iniciándose o no disponibles.';
     }
 
     return Promise.reject(error);
   }
 );
 
-// Wrapper para requests con retry automático
-const apiWithRetry = {
-  get: (url, config) => retry(() => api.get(url, config)),
-  post: (url, data, config) => retry(() => api.post(url, data, config)),
-  put: (url, data, config) => retry(() => api.put(url, data, config)),
-  delete: (url, config) => retry(() => api.delete(url, config)),
-  patch: (url, data, config) => retry(() => api.patch(url, data, config)),
-};
-
-export default apiWithRetry;
-export { api as apiDirect }; // Para casos donde no queremos retry
+export default api;
