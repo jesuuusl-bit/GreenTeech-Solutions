@@ -23,7 +23,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Rutas
-app.use('/api/monitoring', monitoringRoutes);
+app.use('/monitoring', monitoringRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

@@ -21,7 +21,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // API Routes
-app.use('/api/predictive', predictiveRoutes);
+app.use('/predictive', predictiveRoutes);
 
 // Routes
 app.get('/', (req, res) => {

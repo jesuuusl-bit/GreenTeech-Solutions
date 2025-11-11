@@ -21,7 +21,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // API Routes
-app.use('/api/documents', documentRoutes);
+app.use('/documents', documentRoutes);
 
 // Routes
 app.get('/', (req, res) => {

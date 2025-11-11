@@ -25,8 +25,8 @@ app.use(morgan('dev'));
 app.use(express.json());
 
 // Rutas
-app.use('/api/projects', projectRoutes);
-app.use('/api/tasks', taskRoutes);
+app.use('/projects', projectRoutes);
+app.use('/tasks', taskRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
