@@ -1,7 +1,7 @@
 module.exports = {
-  USERS_SERVICE: process.env.USERS_SERVICE_URL || 'https://greentech-users.onrender.com',  //Para produccion - para localhst http://localhost:5001
-  PROJECTS_SERVICE: process.env.PROJECTS_SERVICE_URL || 'http://localhost:5002', //localhost:5002
-  MONITORING_SERVICE: process.env.MONITORING_SERVICE_URL || 'http://localhost:5003', //localhost:5003
-  PREDICTIVE_SERVICE: process.env.PREDICTIVE_SERVICE_URL || 'http://localhost:5004', //localhost:5004
-  DOCUMENTS_SERVICE: process.env.DOCUMENTS_SERVICE_URL || 'http://localhost:5005' //localhost:5005
+  USERS_SERVICE: process.env.USERS_SERVICE_URL || 'https://greentech-users.onrender.com',
+  PROJECTS_SERVICE: process.env.PROJECTS_SERVICE_URL || 'https://greentech-projects.onrender.com',
+  MONITORING_SERVICE: process.env.MONITORING_SERVICE_URL || 'https://greentech-monitoring.onrender.com',
+  PREDICTIVE_SERVICE: process.env.PREDICTIVE_SERVICE_URL || 'https://greentech-predictive.onrender.com',
+  DOCUMENTS_SERVICE: process.env.DOCUMENTS_SERVICE_URL || 'https://greentech-documents.onrender.com'
 };
