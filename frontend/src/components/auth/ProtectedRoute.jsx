@@ -2,7 +2,7 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useState, useEffect } from 'react';
-import { debugLogger } from '../../utils/debugLogger';
+import debugLogger from '../../utils/debugLogger';
 
 export default function ProtectedRoute({ children, roles = [] }) {
   const { user, loading, isAuthenticated } = useAuth();
