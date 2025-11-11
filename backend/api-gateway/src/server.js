@@ -12,6 +12,9 @@ require('dotenv').config();
 
 const app = express();
 
+// ⚠️ IMPORTANTE: Configurar trust proxy para Render
+app.set('trust proxy', 1);
+
 // Seguridad y middlewares
 app.use(helmet());
 app.use(cors({
@@ -54,11 +57,11 @@ const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
   console.log(`
-  ╔═══════════════════════════════════════════════════════╗
-  ║   🚀 API GATEWAY - GreenTech Solutions.              ║
-  ║   Puerto: ${PORT}                                     ║
-  ║   Ambiente: ${process.env.NODE_ENV || 'development'}  ║
-  ╚═══════════════════════════════════════════════════════╝
+  ╔════════════════════════════════════════════╗
+  ║   🚀 API GATEWAY - GreenTech Solutions    ║
+  ║   Puerto: ${PORT}                           ║
+  ║   Ambiente: ${process.env.NODE_ENV || 'development'}           ║
+  ╚════════════════════════════════════════════╝
   `);
   
   console.log('📡 Servicios conectados:');
