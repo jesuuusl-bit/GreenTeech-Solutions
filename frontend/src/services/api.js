@@ -52,11 +52,18 @@ api.interceptors.response.use(
     // Manejo de autenticación
     if (error.response?.status === 401) {
       // Solo limpiar y redirigir si no estamos ya en login o register
-      if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
+      // Y si no es una petición de estadísticas (que puede fallar por servicios dormidos)
+      const isStatsRequest = error.config?.url?.includes('/projects/stats');
+      
+      if (!window.location.pathname.includes('/login') && 
+          !window.location.pathname.includes('/register') &&
+          !isStatsRequest) {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         console.log('🔓 Token inválido, redirigiendo a login...');
         window.location.href = '/login';
+      } else if (isStatsRequest) {
+        console.log('⚠️ Error 401 en stats - probablemente servicio dormido, no redirigiendo');
       }
       return Promise.reject(error);
     }

@@ -29,7 +29,15 @@ export default function Dashboard() {
       const response = await projectService.getStats();
       setStats(response.data);
     } catch (error) {
-      toast.error('Error al cargar estadísticas');
+      console.error('Error al cargar estadísticas:', error);
+      // No mostrar toast de error para evitar spam, solo log
+      // toast.error('Error al cargar estadísticas');
+      // Usar datos por defecto si falla
+      setStats({
+        total: 0,
+        completed: 0,
+        byStatus: []
+      });
     } finally {
       setLoading(false);
     }

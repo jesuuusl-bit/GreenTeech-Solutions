@@ -13,25 +13,35 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
+        debugLogger.log('🔄 Inicializando autenticación...');
         const token = localStorage.getItem('token');
         const currentUser = authService.getCurrentUser();
+        
+        debugLogger.log('🔍 Token en localStorage:', token ? `${token.substring(0, 20)}...` : 'No encontrado');
+        debugLogger.log('🔍 Usuario en localStorage:', currentUser);
         
         if (token && currentUser) {
           setUser(currentUser);
           setIsAuthenticated(true);
+          debugLogger.success('✅ Autenticación inicializada correctamente', {
+            user: currentUser.name,
+            role: currentUser.role
+          });
         } else {
           // Clear invalid auth data
+          debugLogger.log('⚠️ Token o usuario faltante, limpiando datos de auth');
           authService.logout();
           setUser(null);
           setIsAuthenticated(false);
         }
       } catch (error) {
-        console.error('Error initializing auth:', error);
+        debugLogger.error('❌ Error inicializando auth', error);
         authService.logout();
         setUser(null);
         setIsAuthenticated(false);
       } finally {
         setLoading(false);
+        debugLogger.log('🏁 Inicialización de auth completada');
       }
     };
 
