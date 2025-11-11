@@ -23,14 +23,20 @@ api.interceptors.request.use(
 );
 
 // Función para retry automático
-const retry = async (fn, retries = 2, delay = 2000) => {
+const retry = async (fn, retries = 1, delay = 3000) => {
   try {
     return await fn();
   } catch (error) {
+    // No retry para errores de rate limiting
+    if (error.response?.status === 429) {
+      throw error;
+    }
+    
+    // Solo retry para errores de servidor y timeouts
     if (retries > 0 && (error.code === 'ECONNABORTED' || error.response?.status >= 500)) {
       console.log(`🔄 Reintentando request... (${retries} intentos restantes)`);
       await new Promise(resolve => setTimeout(resolve, delay));
-      return retry(fn, retries - 1, delay * 1.5);
+      return retry(fn, retries - 1, delay * 2);
     }
     throw error;
   }
@@ -51,6 +57,8 @@ api.interceptors.response.use(
     // Manejo de errores de servidor y timeouts
     if (error.code === 'ECONNABORTED') {
       error.message = 'El servidor está tardando en responder. Los servicios pueden estar iniciándose. Por favor, espera un momento e intenta de nuevo.';
+    } else if (error.response?.status === 429) {
+      error.message = 'Demasiadas solicitudes. Por favor espera unos segundos antes de intentar de nuevo.';
     } else if (error.response?.status === 502) {
       error.message = 'Error de conexión con el servidor. Los servicios pueden estar iniciándose. Intenta de nuevo en unos segundos.';
     } else if (error.response?.status === 503) {
