@@ -17,10 +17,14 @@ app.set('trust proxy', 1);
 
 // Seguridad y middlewares
 app.use(helmet());
+
+//Ajustar Cors
 app.use(cors({
-  origin: process.env.FRONTEND_URL || '*',
-  credentials: true
+  origin: process.env.FRONTEND_URL || 'green-teech-solutions.vercel.app', // ⭐ CAMBIO AQUÍ
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'] // ⭐ AÑADIDO POR ROBUSTEZ
 }));
+
 app.use(compression());
 app.use(morgan('dev'));
 app.use(express.json({ limit: '10mb' }));
