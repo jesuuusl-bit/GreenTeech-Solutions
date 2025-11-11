@@ -1,5 +1,5 @@
 module.exports = {
-  USERS_SERVICE: process.env.USERS_SERVICE_URL || 'http://localhost:5001',
+  USERS_SERVICE: process.env.USERS_SERVICE_URL || 'https://greentech-users.onrender.com',  //Para produccion - para localhst http://localhost:5001
   PROJECTS_SERVICE: process.env.PROJECTS_SERVICE_URL || 'http://localhost:5002',
   MONITORING_SERVICE: process.env.MONITORING_SERVICE_URL || 'http://localhost:5003',
   PREDICTIVE_SERVICE: process.env.PREDICTIVE_SERVICE_URL || 'http://localhost:5004',
