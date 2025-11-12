@@ -86,6 +86,11 @@ router.post('/users/register', authenticate, restrictTo('admin'), (req, res) =>
 );
 
 // ========== RUTAS DE USUARIOS ==========
+// Specific health check for users service
+router.get('/users/health', (req, res) => {
+  proxyRequest(req, res, services.USERS_SERVICE + '/health');
+});
+
 router.use('/users', authenticate, (req, res) => 
   proxyRequest(req, res, services.USERS_SERVICE)
 );

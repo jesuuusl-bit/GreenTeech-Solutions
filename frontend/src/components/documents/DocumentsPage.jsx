@@ -19,8 +19,8 @@ export default function DocumentsPage() {
     setLoading(true);
     setError(null);
     try {
-      const data = await documentService.getAllDocuments();
-      setDocuments(data);
+      const response = await documentService.getAllDocuments();
+      setDocuments(response.data);
     } catch (err) {
       setError('Error al cargar los documentos.');
       toast.error('Error al cargar los documentos.');
