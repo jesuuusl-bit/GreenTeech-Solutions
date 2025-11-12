@@ -52,10 +52,9 @@ const proxyRequest = async (req, res, serviceUrl) => {
         }
         config.data = form;
         // Axios se encargará de establecer el Content-Type correcto para FormData
-        // No necesitamos establecerlo manualmente aquí, FormData lo hará.
-        // Eliminar el Content-Type original para evitar problemas con Axios
-        delete config.headers['content-type'];
-        console.log(`📦 Proxying multipart/form-data: Reconstructed FormData.`);
+        // Necesitamos fusionar los headers de form-data con los headers existentes
+        config.headers = { ...config.headers, ...form.getHeaders() };
+        console.log(`📦 Proxying multipart/form-data: Reconstructed FormData with headers.`);
       } else if (req.body && Object.keys(req.body).length > 0) {
         config.data = req.body;
         console.log(`📦 Proxying JSON/URL-encoded data: config.data set to req.body.`);
