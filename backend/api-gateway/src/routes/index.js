@@ -19,6 +19,18 @@ const proxyRequest = async (req, res, serviceUrl) => {
     const config = {
       method: req.method,
       url: fullUrl,
+      headers: {
+        host: new URL(serviceUrl).host,
+        'x-forwarded-host': req.headers.host,
+        'x-forwarded-proto': req.protocol,
+        'x-forwarded-for': req.ip,
+        // Forward user info from API Gateway to microservice
+        ...(req.user && { 'x-user-id': req.user.id, 'x-user-role': req.user.role })
+      },
+      timeout: 30000, // 30 segundos
+      validateStatus: () => true // Aceptar cualquier status code
+    };
+
     // Create a new headers object to avoid modifying the original req.headers
     const proxyHeaders = {};
     for (const key in req.headers) {
@@ -30,21 +42,8 @@ const proxyRequest = async (req, res, serviceUrl) => {
     delete proxyHeaders['content-length'];
     delete proxyHeaders['transfer-encoding'];
 
-    const config = {
-      method: req.method,
-      url: fullUrl,
-      headers: {
-        ...proxyHeaders, // Use the cleaned headers
-        host: new URL(serviceUrl).host,
-        'x-forwarded-host': req.headers.host,
-        'x-forwarded-proto': req.protocol,
-        'x-forwarded-for': req.ip,
-        // Forward user info from API Gateway to microservice
-        ...(req.user && { 'x-user-id': req.user.id, 'x-user-role': req.user.role })
-      },
-      timeout: 30000, // 30 segundos
-      validateStatus: () => true // Aceptar cualquier status code
-    };
+    // Merge cleaned headers into config.headers
+    config.headers = { ...config.headers, ...proxyHeaders };
 
     if (req.body && Object.keys(req.body).length > 0) {
       config.data = req.body;
