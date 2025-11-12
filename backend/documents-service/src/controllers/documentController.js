@@ -62,6 +62,10 @@ exports.testMongoDB = async (req, res) => {
 // Subir un documento (con Multer)
 exports.uploadDocument = async (req, res) => {
   try {
+    console.log('[DocumentController] uploadDocument called.');
+    console.log('[DocumentController] req.file:', req.file);
+    console.log('[DocumentController] req.body:', req.body);
+
     if (!req.file) {
       return res.status(400).json({ success: false, message: 'No se ha proporcionado ningún archivo.' });
     }
