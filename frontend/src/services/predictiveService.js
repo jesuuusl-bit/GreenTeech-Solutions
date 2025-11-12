@@ -1,28 +1,44 @@
-export const predictiveService = {
-  getHistoricalData: async (filters = {}) => {
-    const response = await api.get('/predictive/historical', { params: filters });
-    return response.data;
+import api from './api';
+
+const predictiveService = {
+  // Obtener una predicción basada en ciertos parámetros
+  getPrediction: async (predictionData) => {
+    try {
+      console.log('🔮 Requesting prediction with data:', predictionData);
+      const response = await api.post('/predictive/predict', predictionData);
+      console.log('✅ Prediction received successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Error getting prediction:', error);
+      throw error;
+    }
   },
 
-  uploadHistoricalData: async (data) => {
-    const response = await api.post('/predictive/historical', data);
-    return response.data;
+  // Obtener datos históricos para análisis predictivo
+  getHistoricalData: async (params) => {
+    try {
+      console.log('📈 Fetching historical data with params:', params);
+      const response = await api.get('/predictive/history', { params });
+      console.log('✅ Historical data fetched successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Error fetching historical data:', error);
+      throw error;
+    }
   },
 
-  createSimulation: async (simulationData) => {
-    const response = await api.post('/predictive/simulations', simulationData);
-    return response.data;
+  // Obtener modelos predictivos disponibles
+  getPredictionModels: async () => {
+    try {
+      console.log('🧠 Fetching available prediction models...');
+      const response = await api.get('/predictive/models');
+      console.log('✅ Prediction models fetched successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Error fetching prediction models:', error);
+      throw error;
+    }
   },
-
-  getSimulations: async () => {
-    const response = await api.get('/predictive/simulations');
-    return response.data;
-  },
-
-  getPredictions: async (plantId) => {
-    const response = await api.get('/predictive/predictions', {
-      params: { plantId }
-    });
-    return response.data;
-  }
 };
+
+export default predictiveService;
