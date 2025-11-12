@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import documentService from '../../services/documentService';
 import { toast } from 'react-hot-toast';
-import { FileText, UploadCloud, Trash2, Download } from 'lucide-react'; // Iconos
+import { FileText, UploadCloud, Trash2, Download, Home, ChevronRight, AlertCircle } from 'lucide-react'; // Iconos
+import { useNavigate } from 'react-router-dom';
 
 export default function DocumentsPage() {
+  const navigate = useNavigate();
   const [selectedFile, setSelectedFile] = useState(null);
   const [documents, setDocuments] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // Set to true initially for loading state
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -72,86 +74,114 @@ export default function DocumentsPage() {
   };
 
   const handleDownload = (url, filename) => {
-    // Asumiendo que la URL del documento es directamente descargable
-    // O que el backend proporciona una ruta de descarga
     window.open(url, '_blank');
   };
 
-  return (
-    <div className="container mx-auto p-6 bg-gray-900 text-white min-h-screen">
-      <h1 className="text-4xl font-bold mb-8 text-green-400">Gestión de Documentos</h1>
-
-      {/* Sección de Subida de Documentos */}
-      <div className="bg-gray-800 p-6 rounded-lg shadow-lg mb-8">
-        <h2 className="text-2xl font-semibold mb-4 text-green-300">Subir Nuevo Documento</h2>
-        <div className="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-4">
-          <input
-            type="file"
-            onChange={handleFileChange}
-            className="block w-full text-sm text-gray-400
-                       file:mr-4 file:py-2 file:px-4
-                       file:rounded-full file:border-0
-                       file:text-sm file:font-semibold
-                       file:bg-green-500 file:text-white
-                       hover:file:bg-green-600"
-          />
-          <button
-            onClick={handleUpload}
-            disabled={loading || !selectedFile}
-            className="flex items-center justify-center px-6 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <UploadCloud className="mr-2 h-5 w-5" />
-            {loading ? 'Subiendo...' : 'Subir Documento'}
-          </button>
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 p-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
+          </div>
         </div>
-        {error && <p className="text-red-500 mt-4">{error}</p>}
       </div>
+    );
+  }
 
-      {/* Lista de Documentos */}
-      <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
-        <h2 className="text-2xl font-semibold mb-4 text-green-300">Documentos Existentes</h2>
-        {loading && <p className="text-center text-gray-400">Cargando documentos...</p>}
-        {!loading && documents.length === 0 && (
-          <p className="text-center text-gray-400">No hay documentos subidos aún.</p>
-        )}
-        {!loading && documents.length > 0 && (
-          <ul className="space-y-4">
-            {documents.map((doc) => (
-              <li
-                key={doc._id}
-                className="flex flex-col md:flex-row items-start md:items-center justify-between bg-gray-700 p-4 rounded-md shadow-sm hover:bg-gray-600 transition-colors duration-200"
-              >
-                <div className="flex items-center mb-2 md:mb-0">
-                  <FileText className="h-6 w-6 text-green-400 mr-3" />
-                  <div>
-                    <p className="text-lg font-medium text-white">{doc.filename}</p>
-                    <p className="text-sm text-gray-400">
-                      Subido el: {new Date(doc.uploadDate).toLocaleDateString()}
-                    </p>
+  return (
+    <div className="min-h-screen bg-slate-50 p-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Breadcrumb */}
+        <nav className="flex items-center space-x-2 text-sm text-gray-600 mb-6">
+          <button 
+            onClick={() => navigate('/dashboard')}
+            className="flex items-center hover:text-emerald-600 transition-colors"
+          >
+            <Home className="w-4 h-4 mr-1" />
+            Dashboard
+          </button>
+          <ChevronRight className="w-4 h-4" />
+          <span className="text-gray-900 font-medium">Documentos</span>
+        </nav>
+
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Gestión de Documentos</h1>
+            <p className="text-gray-600 mt-2">Administra todos los documentos relacionados con tus proyectos</p>
+          </div>
+        </div>
+
+        {/* Sección de Subida de Documentos */}
+        <div className="card mb-6">
+          <h2 className="text-2xl font-semibold mb-4 text-gray-900">Subir Nuevo Documento</h2>
+          <div className="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-4">
+            <input
+              type="file"
+              onChange={handleFileChange}
+              className="input-field block w-full" // Usar input-field y ajustar para file
+            />
+            <button
+              onClick={handleUpload}
+              disabled={loading || !selectedFile}
+              className="btn-primary"
+            >
+              <UploadCloud className="mr-2 h-5 w-5" />
+              {loading ? 'Subiendo...' : 'Subir Documento'}
+            </button>
+          </div>
+          {error && <p className="text-red-500 mt-4">{error}</p>}
+        </div>
+
+        {/* Lista de Documentos */}
+        <div className="card">
+          <h2 className="text-2xl font-semibold mb-4 text-gray-900">Documentos Existentes</h2>
+          {loading && <p className="text-center text-gray-600">Cargando documentos...</p>}
+          {!loading && documents.length === 0 ? (
+            <div className="text-center py-8">
+              <AlertCircle className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+              <p className="text-gray-600">No hay documentos subidos aún.</p>
+            </div>
+          ) : (
+            <ul className="space-y-4">
+              {documents.map((doc) => (
+                <li
+                  key={doc._id}
+                  className="card flex flex-col md:flex-row items-start md:items-center justify-between p-4 hover:shadow-lg transition-shadow duration-200"
+                >
+                  <div className="flex items-center mb-2 md:mb-0">
+                    <FileText className="h-6 w-6 text-emerald-600 mr-3" />
+                    <div>
+                      <p className="text-lg font-medium text-gray-900">{doc.filename}</p>
+                      <p className="text-sm text-gray-600">
+                        Subido el: {new Date(doc.uploadDate).toLocaleDateString('es-ES')}
+                      </p>
+                    </div>
                   </div>
-                </div>
-                <div className="flex space-x-3">
-                  {doc.url && ( // Asegúrate de que la URL exista antes de mostrar el botón de descarga
+                  <div className="flex space-x-3 mt-3 md:mt-0">
+                    {doc.url && (
+                      <button
+                        onClick={() => handleDownload(doc.url, doc.filename)}
+                        className="btn-secondary flex items-center"
+                      >
+                        <Download className="h-4 w-4 mr-2" />
+                        Descargar
+                      </button>
+                    )}
                     <button
-                      onClick={() => handleDownload(doc.url, doc.filename)}
-                      className="flex items-center px-4 py-2 text-sm font-medium rounded-md text-blue-300 hover:text-blue-100 bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                      onClick={() => handleDelete(doc._id)}
+                      className="btn-danger flex items-center"
                     >
-                      <Download className="h-4 w-4 mr-2" />
-                      Descargar
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Eliminar
                     </button>
-                  )}
-                  <button
-                    onClick={() => handleDelete(doc._id)}
-                    className="flex items-center px-4 py-2 text-sm font-medium rounded-md text-red-300 hover:text-red-100 bg-red-700 hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Eliminar
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
     </div>
   );
