@@ -7,6 +7,8 @@ import { useNavigate } from 'react-router-dom';
 export default function DocumentsPage() {
   const navigate = useNavigate();
   const [selectedFile, setSelectedFile] = useState(null);
+  const [documentTitle, setDocumentTitle] = useState(''); // New state for document title
+  const [documentType, setDocumentType] = useState('');   // New state for document type
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true); // Set to true initially for loading state
   const [error, setError] = useState(null);
@@ -38,13 +40,28 @@ export default function DocumentsPage() {
       toast.error('Por favor, selecciona un archivo para subir.');
       return;
     }
+    if (!documentTitle) {
+      toast.error('Por favor, ingresa un título para el documento.');
+      return;
+    }
+    if (!documentType) {
+      toast.error('Por favor, selecciona un tipo de documento.');
+      return;
+    }
 
     setLoading(true);
     setError(null);
     try {
-      await documentService.uploadDocument(selectedFile);
+      const formData = new FormData();
+      formData.append('document', selectedFile);
+      formData.append('title', documentTitle);
+      formData.append('type', documentType);
+
+      await documentService.uploadDocument(formData);
       toast.success('Documento subido exitosamente!');
       setSelectedFile(null);
+      setDocumentTitle(''); // Reset title
+      setDocumentType('');   // Reset type
       fetchDocuments(); // Refrescar la lista de documentos
     } catch (err) {
       setError('Error al subir el documento.');
@@ -122,9 +139,29 @@ export default function DocumentsPage() {
               onChange={handleFileChange}
               className="input-field block w-full" // Usar input-field y ajustar para file
             />
+            <input
+              type="text"
+              placeholder="Título del documento"
+              value={documentTitle}
+              onChange={(e) => setDocumentTitle(e.target.value)}
+              className="input-field block w-full"
+            />
+            <select
+              value={documentType}
+              onChange={(e) => setDocumentType(e.target.value)}
+              className="input-field block w-full"
+            >
+              <option value="">Selecciona tipo</option>
+              <option value="report">Reporte</option>
+              <option value="manual">Manual</option>
+              <option value="policy">Política</option>
+              <option value="certificate">Certificado</option>
+              <option value="image">Imagen</option>
+              <option value="other">Otro</option>
+            </select>
             <button
               onClick={handleUpload}
-              disabled={loading || !selectedFile}
+              disabled={loading || !selectedFile || !documentTitle || !documentType}
               className="btn-primary"
             >
               <UploadCloud className="mr-2 h-5 w-5" />

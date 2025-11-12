@@ -24,7 +24,9 @@ const proxyRequest = async (req, res, serviceUrl) => {
         host: new URL(serviceUrl).host,
         'x-forwarded-host': req.headers.host,
         'x-forwarded-proto': req.protocol,
-        'x-forwarded-for': req.ip
+        'x-forwarded-for': req.ip,
+        // Forward user info from API Gateway to microservice
+        ...(req.user && { 'x-user-id': req.user.id, 'x-user-role': req.user.role })
       },
       timeout: 30000, // 30 segundos
       validateStatus: () => true // Aceptar cualquier status code

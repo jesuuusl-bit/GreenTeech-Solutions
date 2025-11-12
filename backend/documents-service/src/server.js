@@ -13,12 +13,15 @@ connectDB();
 // Importar rutas
 const documentRoutes = require('./routes/documentRoutes');
 
+const { reconstructUser } = require('./middleware/auth'); // Added this line
+
 // Middlewares
 app.use(helmet());
 app.use(cors());
 app.use(morgan('combined'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(reconstructUser); // Added this line
 
 // API Routes
 app.use('/documents', documentRoutes);

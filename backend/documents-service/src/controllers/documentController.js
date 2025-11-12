@@ -71,10 +71,12 @@ exports.uploadDocument = async (req, res) => {
     const fileUrl = `/uploads/${req.file.originalname}`; // Placeholder URL
 
     const newDocument = new Document({
-      filename: req.file.originalname,
-      mimetype: req.file.mimetype,
-      size: req.file.size,
-      url: fileUrl, // URL donde se almacenará el archivo
+      title: req.body.title || req.file.originalname, // Get title from body or use filename
+      type: req.body.type || 'other', // Get type from body or use 'other'
+      fileName: req.file.originalname,
+      fileUrl: fileUrl, // URL donde se almacenará el archivo
+      fileSize: req.file.size, // Add fileSize
+      mimetype: req.file.mimetype, // Add mimetype
       uploadedBy: req.user ? req.user.id : null, // Asumiendo que req.user está disponible
       projectId: req.body.projectId || null, // Si se envía un projectId en el body
     });
