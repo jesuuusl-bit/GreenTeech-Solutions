@@ -33,8 +33,7 @@ exports.getAllProjects = async (req, res) => {
       ];
     }
 
-    const projects = await Project.find(filter)
-      .sort('-createdAt');
+    const projects = await Project.find(filter);
     
     res.status(200).json({
       success: true,
