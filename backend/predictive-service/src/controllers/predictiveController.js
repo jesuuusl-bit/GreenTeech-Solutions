@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Prediction = require('../models/Prediction');
 const weatherService = require('../services/weatherService');
 const { Regression } = require('ml-regression'); // Asumiendo que usas ml-regression
@@ -47,7 +48,9 @@ exports.getPrediction = async (req, res) => {
 
     // Guardar la predicción (opcional, si quieres mantener un historial)
     const newPrediction = new Prediction({
-      inputFeatures: { city, temp, weatherDescription, rainProbability, windIntensity },
+      projectId: new mongoose.Types.ObjectId('60d5ec49f8c7a10015a4b7a1'), // Placeholder projectId
+      predictionType: 'weather', // This prediction is based on weather data
+      data: { city, temp, weatherDescription, rainProbability, windIntensity },
       predictedValue: predictedValue,
       timestamp: new Date(),
     });
