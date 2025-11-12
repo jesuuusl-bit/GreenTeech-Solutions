@@ -13,19 +13,43 @@ const weatherService = {
       throw new Error('OpenWeatherMap API key no configurada en las variables de entorno.');
     }
 
-    const cacheKey = `${city}-${countryCode}`;
+    // Simple translation for common city names
+    let translatedCity = city.toLowerCase();
+    switch (translatedCity) {
+      case 'londres':
+        translatedCity = 'london';
+        break;
+      case 'parís':
+        translatedCity = 'paris';
+        break;
+      case 'nueva york':
+        translatedCity = 'new york';
+        break;
+      case 'tokio':
+        translatedCity = 'tokyo';
+        break;
+      case 'roma':
+        translatedCity = 'rome';
+        break;
+      // Add more translations as needed
+      default:
+        // No translation needed
+        break;
+    }
+
+    const cacheKey = `${translatedCity}-${countryCode}`;
     const now = Date.now();
 
     // Verificar si los datos están en caché y aún son válidos
     if (weatherCache[cacheKey] && (now - weatherCache[cacheKey].timestamp < CACHE_DURATION)) {
-      console.log(`✅ Datos del clima para ${city} obtenidos de la caché.`);
+      console.log(`✅ Datos del clima para ${translatedCity} obtenidos de la caché.`);
       return weatherCache[cacheKey].data;
     }
 
-    const url = `${WEATHER_API_BASE_URL}/weather?q=${city}${countryCode ? `,${countryCode}` : ''}&appid=${apiKey}&units=metric&lang=es`;
+    const url = `${WEATHER_API_BASE_URL}/weather?q=${translatedCity}${countryCode ? `,${countryCode}` : ''}&appid=${apiKey}&units=metric&lang=es`;
     
     try {
-      console.log(`🔍 Solicitando datos del clima para ${city} a OpenWeatherMap...`);
+      console.log(`🔍 Solicitando datos del clima para ${translatedCity} a OpenWeatherMap...`);
       const response = await axios.get(url);
       
       // Almacenar en caché
