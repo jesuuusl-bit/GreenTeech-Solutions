@@ -43,31 +43,7 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Basic document endpoints (placeholder)
-app.get('/api/documents', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Gestión documental disponible',
-    data: {
-      documents: [],
-      total: 0,
-      message: 'Servicio listo para gestión de documentos',
-      timestamp: new Date().toISOString()
-    }
-  });
-});
 
-app.post('/api/documents/upload', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Endpoint de subida de documentos listo',
-    data: {
-      message: 'Servicio listo para recibir archivos',
-      maxFileSize: process.env.MAX_FILE_SIZE || '10MB',
-      timestamp: new Date().toISOString()
-    }
-  });
-});
 
 // Error handling middleware
 app.use((err, req, res, next) => {

@@ -1,64 +1,18 @@
 const express = require('express');
-const Document = require('../models/Document');
 const router = express.Router();
+const documentController = require('../controllers/documentController');
+const upload = require('../middleware/upload'); // Importar el middleware de Multer
 
 // GET /api/documents - Obtener todos los documentos
-router.get('/', async (req, res) => {
-  try {
-    const documents = await Document.find()
-      .populate('uploadedBy', 'name email')
-      .populate('projectId', 'name')
-      .sort({ createdAt: -1 });
-    
-    res.json({
-      success: true,
-      data: documents
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error al obtener documentos',
-      error: error.message
-    });
-  }
-});
+router.get('/', documentController.getAllDocuments);
 
-// POST /api/documents - Crear nuevo documento
-router.post('/', async (req, res) => {
-  try {
-    const document = new Document(req.body);
-    await document.save();
-    
-    res.status(201).json({
-      success: true,
-      data: document,
-      message: 'Documento creado exitosamente'
-    });
-  } catch (error) {
-    res.status(400).json({
-      success: false,
-      message: 'Error al crear documento',
-      error: error.message
-    });
-  }
-});
+// POST /api/documents - Crear nuevo documento (usado para datos no de archivo)
+router.post('/', documentController.createDocument);
+
+// POST /api/documents/upload - Subir un documento con Multer
+router.post('/upload', upload.single('document'), documentController.uploadDocument);
 
 // GET /api/documents/test - Endpoint de prueba para activar MongoDB
-router.get('/test', async (req, res) => {
-  try {
-    const count = await Document.countDocuments();
-    res.json({
-      success: true,
-      message: 'Conexión a MongoDB activa',
-      documentsCount: count
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error de conexión a MongoDB',
-      error: error.message
-    });
-  }
-});
+router.get('/test', documentController.testMongoDB);
 
 module.exports = router;

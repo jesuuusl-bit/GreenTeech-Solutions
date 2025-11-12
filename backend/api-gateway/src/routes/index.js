@@ -30,8 +30,15 @@ const proxyRequest = async (req, res, serviceUrl) => {
     };
 
     // Añadir body si existe
-    if (req.body && Object.keys(req.body).length > 0) {
-      config.data = req.body;
+    if (req.method === 'POST' || req.method === 'PUT' || req.method === 'PATCH') {
+      // Para multipart/form-data, pasar el objeto req directamente para que Axios lo transmita
+      if (req.headers['content-type'] && req.headers['content-type'].startsWith('multipart/form-data')) {
+        config.data = req;
+        // Asegurarse de que Axios no sobrescriba el Content-Type para multipart/form-data
+        config.headers['Content-Type'] = req.headers['content-type'];
+      } else if (req.body && Object.keys(req.body).length > 0) {
+        config.data = req.body;
+      }
     }
     
     
