@@ -4,6 +4,7 @@ const {
   getCurrentProduction,
   getHistoricalData,
   createProductionData,
+  updateProductionData,
   getAlerts,
   acknowledgeAlert,
   resolveAlert,
@@ -13,6 +14,7 @@ const {
 router.get('/production/current', getCurrentProduction);
 router.get('/production/historical', getHistoricalData);
 router.post('/production', createProductionData);
+router.patch('/production/:id', updateProductionData);
 
 router.get('/alerts', getAlerts);
 

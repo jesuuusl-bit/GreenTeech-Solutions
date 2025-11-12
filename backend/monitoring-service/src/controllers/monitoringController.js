@@ -109,6 +109,41 @@ exports.createProductionData = async (req, res) => {
   }
 };
 
+exports.updateProductionData = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updatedData = req.body;
+
+    const data = await ProductionData.findByIdAndUpdate(id, updatedData, {
+      new: true, // Return the updated document
+      runValidators: true // Run schema validators on update
+    });
+
+    if (!data) {
+      return res.status(404).json({
+        success: false,
+        message: 'Datos de producción no encontrados'
+      });
+    }
+
+    // Consider re-checking for alerts if efficiency is updated
+    // For now, we'll just update the data.
+    // If (data.efficiency < 70) { ... create alert ... }
+
+    res.status(200).json({
+      success: true,
+      message: 'Datos de producción actualizados',
+      data
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error al actualizar datos de producción',
+      error: error.message
+    });
+  }
+};
+
 exports.getAlerts = async (req, res) => {
   try {
     const { status, severity, plantId } = req.query;
