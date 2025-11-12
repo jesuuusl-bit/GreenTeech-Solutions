@@ -22,6 +22,7 @@ export default function DocumentsPage() {
     setError(null);
     try {
       const response = await documentService.getAllDocuments();
+      console.log('API Response for documents:', response); // Add this log
       setDocuments(response.data);
     } catch (err) {
       setError('Error al cargar los documentos.');
