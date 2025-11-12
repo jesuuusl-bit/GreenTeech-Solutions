@@ -1,4 +1,3 @@
-// ===== frontend/src/services/monitoringService.js =====
 import api from './api';
 
 export const monitoringService = {
@@ -24,6 +23,8 @@ export const monitoringService = {
     const response = await api.get('/monitoring/alerts', { params: filters });
     return response.data;
   },
+
+
 
   acknowledgeAlert: async (id, userId, userName) => {
     const response = await api.patch(`/monitoring/alerts/${id}/acknowledge`, {
