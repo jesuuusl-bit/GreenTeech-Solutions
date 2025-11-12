@@ -34,10 +34,7 @@ const proxyRequest = async (req, res, serviceUrl) => {
       config.data = req.body;
     }
     
-    // Añadir query params si existen
-    if (req.query && Object.keys(req.query).length > 0) {
-      config.params = req.query;
-    }
+    
 
     const response = await axios(config);
     
