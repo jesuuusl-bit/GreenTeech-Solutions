@@ -14,6 +14,7 @@ const proxyRequest = async (req, res, serviceUrl) => {
     const fullUrl = `${serviceUrl}${targetPath}`;
     
     console.log(`📡 Proxy request: ${req.method} ${fullUrl}`);
+    console.log(`🔍 Incoming Content-Type: ${req.headers['content-type']}`);
     
     const config = {
       method: req.method,
@@ -36,14 +37,20 @@ const proxyRequest = async (req, res, serviceUrl) => {
         config.data = req;
         // Asegurarse de que Axios no sobrescriba el Content-Type para multipart/form-data
         config.headers['Content-Type'] = req.headers['content-type'];
+        console.log(`📦 Proxying multipart/form-data: config.data set to req stream.`);
       } else if (req.body && Object.keys(req.body).length > 0) {
         config.data = req.body;
+        console.log(`📦 Proxying JSON/URL-encoded data: config.data set to req.body.`);
+      } else {
+        console.log(`📦 No body to proxy or body is empty.`);
       }
     }
     
     
 
     const response = await axios(config);
+    console.log(`✅ Proxy response status: ${response.status}`);
+    console.log(`✅ Proxy response data (first 100 chars): ${JSON.stringify(response.data).substring(0, 100)}`);
     
     // Reenviar todos los headers de respuesta
     Object.keys(response.headers).forEach(key => {
