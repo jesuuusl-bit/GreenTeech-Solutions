@@ -8,8 +8,6 @@ import { useNavigate } from 'react-router-dom';
 export default function PredictivePage() {
   const navigate = useNavigate();
   const [predictionInput, setPredictionInput] = useState({
-    rainProbability: 20, // Ejemplo: 20%
-    windIntensity: 5,    // Ejemplo: 5 m/s
     city: 'Madrid'
   });
   const [predictionResult, setPredictionResult] = useState(null);
@@ -41,7 +39,7 @@ export default function PredictivePage() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setPredictionInput((prev) => ({ ...prev, [name]: name === 'city' ? value : parseFloat(value) }));
+    setPredictionInput((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleGetPrediction = async () => {
@@ -98,36 +96,7 @@ export default function PredictivePage() {
         {/* Sección de Predicción */}
         <div className="card mb-6">
           <h2 className="text-2xl font-semibold mb-4 text-gray-900">Realizar Predicción</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-            <div>
-              <label htmlFor="rainProbability" className="block text-sm font-medium text-gray-700">
-                Probabilidad de Lluvia (%):
-              </label>
-              <input
-                type="number"
-                id="rainProbability"
-                name="rainProbability"
-                value={predictionInput.rainProbability}
-                onChange={handleInputChange}
-                className="input-field"
-                min="0"
-                max="100"
-              />
-            </div>
-            <div>
-              <label htmlFor="windIntensity" className="block text-sm font-medium text-gray-700">
-                Intensidad del Viento (m/s):
-              </label>
-              <input
-                type="number"
-                id="windIntensity"
-                name="windIntensity"
-                value={predictionInput.windIntensity}
-                onChange={handleInputChange}
-                className="input-field"
-                min="0"
-              />
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-1 gap-4 mb-4">
             <div>
               <label htmlFor="city" className="block text-sm font-medium text-gray-700">
                 Ciudad (para clima):

@@ -4,23 +4,35 @@ const { Regression } = require('ml-regression'); // Asumiendo que usas ml-regres
 
 // Controlador para obtener una predicción
 exports.getPrediction = async (req, res) => {
-  const { rainProbability, windIntensity, city } = req.body;
+  const { city } = req.body;
 
-  if (rainProbability === undefined || windIntensity === undefined) {
-    return res.status(400).json({ message: 'Se requieren probabilidad de lluvia e intensidad del viento para la predicción.' });
+  if (!city) {
+    return res.status(400).json({ message: 'Se requiere la ciudad para la predicción.' });
   }
 
   try {
     let weatherData = null;
     let temp = 0;
     let weatherDescription = 'Desconocido';
+    let rainProbability = 0; // Default to 0
+    let windIntensity = 0;   // Default to 0
 
-    if (city) {
-      weatherData = await weatherService.getWeatherData(city);
-      console.log('Datos del clima obtenidos:', weatherData);
-      if (weatherData && weatherData.main && weatherData.main.temp) {
+    weatherData = await weatherService.getWeatherData(city);
+    console.log('Datos del clima obtenidos:', weatherData);
+
+    if (weatherData) {
+      if (weatherData.main && weatherData.main.temp) {
         temp = weatherData.main.temp;
+      }
+      if (weatherData.weather && weatherData.weather[0] && weatherData.weather[0].description) {
         weatherDescription = weatherData.weather[0].description;
+      }
+      if (weatherData.wind && weatherData.wind.speed) {
+        windIntensity = weatherData.wind.speed;
+      }
+      // Derive rainProbability from rain.1h if available
+      if (weatherData.rain && weatherData.rain['1h'] > 0) {
+        rainProbability = 0.8; // Simple proxy: if it's raining, set a high probability
       }
     }
 
@@ -35,7 +47,7 @@ exports.getPrediction = async (req, res) => {
 
     // Guardar la predicción (opcional, si quieres mantener un historial)
     const newPrediction = new Prediction({
-      inputFeatures: { rainProbability, windIntensity, city, temp, weatherDescription },
+      inputFeatures: { city, temp, weatherDescription, rainProbability, windIntensity },
       predictedValue: predictedValue,
       timestamp: new Date(),
     });
