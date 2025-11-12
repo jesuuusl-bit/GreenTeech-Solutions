@@ -26,6 +26,7 @@ export default function MonitoringPage() {
   const [newProductionData, setNewProductionData] = useState({
     plantId: '',
     plantName: '',
+    plantType: 'solar', // Added plantType
     production: {
       current: '',
       capacity: ''
@@ -137,7 +138,7 @@ export default function MonitoringPage() {
     e.preventDefault();
     try {
       // Basic validation
-      if (!newProductionData.plantId || !newProductionData.plantName || !newProductionData.production.current || !newProductionData.production.capacity || !newProductionData.efficiency || !newProductionData.timestamp) {
+      if (!newProductionData.plantId || !newProductionData.plantName || !newProductionData.plantType || !newProductionData.production.current || !newProductionData.production.capacity || !newProductionData.efficiency || !newProductionData.timestamp) {
         toast.error('Todos los campos son obligatorios.');
         return;
       }
@@ -158,6 +159,7 @@ export default function MonitoringPage() {
       setNewProductionData({ // Reset form
         plantId: '',
         plantName: '',
+        plantType: 'solar', // Reset plantType
         production: {
           current: '',
           capacity: ''
@@ -257,6 +259,21 @@ export default function MonitoringPage() {
                     placeholder="Ej: Valle del Sol"
                     required
                   />
+                </div>
+                <div>
+                  <label htmlFor="plantType" className="block text-sm font-medium text-gray-700 mb-1">Tipo de Planta</label>
+                  <select
+                    id="plantType"
+                    name="plantType"
+                    value={newProductionData.plantType}
+                    onChange={handleNewProductionDataChange}
+                    className="input-field"
+                    required
+                  >
+                    <option value="solar">Solar</option>
+                    <option value="wind">Eólico</option>
+                    <option value="hybrid">Híbrido</option>
+                  </select>
                 </div>
                 <div>
                   <label htmlFor="currentProduction" className="block text-sm font-medium text-gray-700 mb-1">Producción Actual (MW)</label>
@@ -379,6 +396,9 @@ export default function MonitoringPage() {
                       Planta
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Tipo
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Producción Actual (MW)
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -397,6 +417,9 @@ export default function MonitoringPage() {
                     <tr key={plant._id}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         {plant.plantName || plant.plantId}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {plant.plantType}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {plant.production.current.toFixed(2)}
