@@ -20,7 +20,12 @@ const proxyRequest = async (req, res, serviceUrl) => {
       method: req.method,
       url: fullUrl,
     // Create a new headers object to avoid modifying the original req.headers
-    const proxyHeaders = Object.assign({}, req.headers);
+    const proxyHeaders = {};
+    for (const key in req.headers) {
+      if (Object.prototype.hasOwnProperty.call(req.headers, key)) {
+        proxyHeaders[key] = req.headers[key];
+      }
+    }
     // Remove headers that axios will manage or that cause conflicts
     delete proxyHeaders['content-length'];
     delete proxyHeaders['transfer-encoding'];
