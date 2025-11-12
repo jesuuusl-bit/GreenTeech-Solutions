@@ -2,9 +2,11 @@
 const express = require('express');
 const axios = require('axios');
 const router = express.Router();
+const FormData = require('form-data'); // Import form-data
 const { authenticate, restrictTo } = require('../middleware/auth');
 const { authLimiter } = require('../middleware/rateLimiter');
 const services = require('../config/services');
+const upload = require('../middleware/upload'); // Import API Gateway's multer middleware
 
 // Función helper para proxy de requests
 const proxyRequest = async (req, res, serviceUrl) => {
@@ -34,12 +36,26 @@ const proxyRequest = async (req, res, serviceUrl) => {
 
     // Añadir body si existe
     if (req.method === 'POST' || req.method === 'PUT' || req.method === 'PATCH') {
-      // Para multipart/form-data, pasar el objeto req directamente para que Axios lo transmita
+      // Si es multipart/form-data, reconstruir el FormData
       if (req.headers['content-type'] && req.headers['content-type'].startsWith('multipart/form-data')) {
-        config.data = req;
-        // Asegurarse de que Axios no sobrescriba el Content-Type para multipart/form-data
-        config.headers['Content-Type'] = req.headers['content-type'];
-        console.log(`📦 Proxying multipart/form-data: config.data set to req stream.`);
+        const form = new FormData();
+        // Añadir el archivo
+        if (req.file) {
+          form.append(req.file.fieldname, req.file.buffer, {
+            filename: req.file.originalname,
+            contentType: req.file.mimetype,
+          });
+        }
+        // Añadir otros campos del body
+        for (const key in req.body) {
+          form.append(key, req.body[key]);
+        }
+        config.data = form;
+        // Axios se encargará de establecer el Content-Type correcto para FormData
+        // No necesitamos establecerlo manualmente aquí, FormData lo hará.
+        // Eliminar el Content-Type original para evitar problemas con Axios
+        delete config.headers['content-type'];
+        console.log(`📦 Proxying multipart/form-data: Reconstructed FormData.`);
       } else if (req.body && Object.keys(req.body).length > 0) {
         config.data = req.body;
         console.log(`📦 Proxying JSON/URL-encoded data: config.data set to req.body.`);
@@ -139,6 +155,11 @@ router.use('/simulations', authenticate, (req, res) =>
 );
 
 // ========== RUTAS DE DOCUMENTOS ==========
+// Specific route for document upload to apply multer middleware
+router.post('/documents/upload', authenticate, upload.single('document'), (req, res) => {
+  proxyRequest(req, res, services.DOCUMENTS_SERVICE);
+});
+
 router.use('/documents', authenticate, (req, res) => 
   proxyRequest(req, res, services.DOCUMENTS_SERVICE)
 );
