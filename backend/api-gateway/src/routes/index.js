@@ -21,6 +21,9 @@ const proxyRequest = async (req, res, serviceUrl) => {
       url: fullUrl,
       headers: {
         ...req.headers,
+        // Remove headers that axios will manage or that cause conflicts
+        'content-length': undefined,
+        'transfer-encoding': undefined,
         host: new URL(serviceUrl).host,
         'x-forwarded-host': req.headers.host,
         'x-forwarded-proto': req.protocol,

@@ -1,6 +1,12 @@
 const request = require('supertest');
 const app = require('../src/app'); // Importa tu app Express desde el nuevo app.js
 const services = require('../src/config/services'); // Para acceder a las URLs de los servicios
+const jwt = require('jsonwebtoken'); // Import jsonwebtoken
+
+// Define un JWT_SECRET para el entorno de pruebas
+process.env.JWT_SECRET = 'test_jwt_secret'; 
+process.env.USERS_SERVICE_URL = 'http://localhost:5001'; // Mock user service URL
+process.env.DOCUMENTS_SERVICE_URL = 'http://localhost:5005'; // Mock documents service URL
 
 describe('API Gateway - Unit Tests', () => {
 
@@ -20,6 +26,15 @@ describe('API Gateway - Unit Tests', () => {
 });
 
 describe('API Gateway - Integration Tests', () => {
+  let testUserToken;
+  const testUserId = '60d5ec49f8c7a10015a4b7c8'; // Un ID de usuario de prueba
+  const testUserRole = 'admin'; // Un rol de usuario de prueba
+
+  beforeAll(() => {
+    // Generar un token JWT válido para el usuario de prueba
+    testUserToken = jwt.sign({ id: testUserId, role: testUserRole }, process.env.JWT_SECRET, { expiresIn: '1h' });
+  });
+
   // Nota: Los tests de integración del API Gateway son complejos porque requieren que los microservicios estén corriendo.
   // Para un entorno de CI/CD, esto a menudo se maneja con Docker Compose o mocks de los servicios downstream.
   // Aquí, simularemos una llamada a una ruta que debería ser proxyada.
@@ -66,6 +81,7 @@ describe('API Gateway - Integration Tests', () => {
 
     const response = await request(app)
       .post('/api/documents/upload')
+      .set('Authorization', `Bearer ${testUserToken}`) // Add Authorization header
       .attach('document', filePath) // 'document' es el nombre del campo del archivo
       .field('title', 'Test Document')
       .field('type', 'other')
