@@ -2,21 +2,19 @@
 const express = require('express');
 const axios = require('axios');
 const router = express.Router();
-const FormData = require('form-data'); // Import form-data
+const { createProxyMiddleware } = require('http-proxy-middleware'); // Import createProxyMiddleware
 const { authenticate, restrictTo } = require('../middleware/auth');
 const { authLimiter } = require('../middleware/rateLimiter');
 const services = require('../config/services');
-const upload = require('../middleware/upload'); // Import API Gateway's multer middleware
+// Removed FormData and upload imports as they are no longer needed for documents proxy
 
-// Función helper para proxy de requests
+// Función helper para proxy de requests (para rutas no-documentos)
 const proxyRequest = async (req, res, serviceUrl) => {
   try {
-    // Construir la URL completa
     const targetPath = req.originalUrl.replace('/api', '');
     const fullUrl = `${serviceUrl}${targetPath}`;
     
     console.log(`📡 Proxy request: ${req.method} ${fullUrl}`);
-    console.log(`🔍 Incoming Content-Type: ${req.headers['content-type']}`);
     
     const config = {
       method: req.method,
@@ -34,41 +32,12 @@ const proxyRequest = async (req, res, serviceUrl) => {
       validateStatus: () => true // Aceptar cualquier status code
     };
 
-    // Añadir body si existe
-    if (req.method === 'POST' || req.method === 'PUT' || req.method === 'PATCH') {
-      // Si es multipart/form-data, reconstruir el FormData
-      if (req.headers['content-type'] && req.headers['content-type'].startsWith('multipart/form-data')) {
-        const form = new FormData();
-        // Añadir el archivo
-        if (req.file) {
-          form.append(req.file.fieldname, req.file.buffer, {
-            filename: req.file.originalname,
-            contentType: req.file.mimetype,
-          });
-        }
-        // Añadir otros campos del body
-        for (const key in req.body) {
-          form.append(key, req.body[key]);
-        }
-        config.data = form; // Pass the form object directly, axios will handle the stream
-        // Merge headers from form-data, which includes the correct Content-Type with boundary
-        config.headers = { ...config.headers, ...form.getHeaders() };
-        console.log(`📦 Proxying multipart/form-data: Reconstructed FormData with correct headers.`);
-      } else if (req.body && Object.keys(req.body).length > 0) {
-        config.data = req.body;
-        console.log(`📦 Proxying JSON/URL-encoded data: config.data set to req.body.`);
-      } else {
-        console.log(`📦 No body to proxy or body is empty.`);
-      }
+    if (req.body && Object.keys(req.body).length > 0) {
+      config.data = req.body;
     }
     
-    
-
     const response = await axios(config);
-    console.log(`✅ Proxy response status: ${response.status}`);
-    console.log(`✅ Proxy response data (first 100 chars): ${JSON.stringify(response.data).substring(0, 100)}`);
     
-    // Reenviar todos los headers de respuesta
     Object.keys(response.headers).forEach(key => {
       res.setHeader(key, response.headers[key]);
     });
@@ -153,13 +122,32 @@ router.use('/simulations', authenticate, (req, res) =>
 );
 
 // ========== RUTAS DE DOCUMENTOS ==========
-// Specific route for document upload to apply multer middleware
-router.post('/documents/upload', authenticate, upload.single('document'), (req, res) => {
-  proxyRequest(req, res, services.DOCUMENTS_SERVICE);
+const documentsProxy = createProxyMiddleware({
+  target: services.DOCUMENTS_SERVICE,
+  changeOrigin: true,
+  pathRewrite: {
+    '^/api/documents': '', // reescribe /api/documents a /
+  },
+  onProxyReq: (proxyReq, req, res) => {
+    // Añadir headers de usuario si están disponibles
+    if (req.user) {
+      proxyReq.setHeader('x-user-id', req.user.id);
+      proxyReq.setHeader('x-user-role', req.user.role);
+    }
+    // Para multipart/form-data, http-proxy-middleware maneja el stream automáticamente
+    // No necesitamos hacer nada especial aquí, solo asegurarnos de que el Content-Type original se mantenga
+    // y que el body no haya sido consumido por otros middlewares antes de este proxy.
+  },
+  onError: (err, req, res) => {
+    console.error('❌ Proxy error for documents service:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Error al comunicarse con el servicio de documentos',
+      error: err.message
+    });
+  }
 });
 
-router.use('/documents', authenticate, (req, res) => 
-  proxyRequest(req, res, services.DOCUMENTS_SERVICE)
-);
+router.use('/documents', authenticate, documentsProxy); // Aplicar autenticación y luego el proxy
 
 module.exports = router;
