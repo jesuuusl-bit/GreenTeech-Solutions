@@ -19,11 +19,17 @@ const proxyRequest = async (req, res, serviceUrl) => {
     const config = {
       method: req.method,
       url: fullUrl,
+    // Create a new headers object to avoid modifying the original req.headers
+    const proxyHeaders = { ...req.headers };
+    // Remove headers that axios will manage or that cause conflicts
+    delete proxyHeaders['content-length'];
+    delete proxyHeaders['transfer-encoding'];
+
+    const config = {
+      method: req.method,
+      url: fullUrl,
       headers: {
-        ...req.headers,
-        // Remove headers that axios will manage or that cause conflicts
-        'content-length': undefined,
-        'transfer-encoding': undefined,
+        ...proxyHeaders, // Use the cleaned headers
         host: new URL(serviceUrl).host,
         'x-forwarded-host': req.headers.host,
         'x-forwarded-proto': req.protocol,

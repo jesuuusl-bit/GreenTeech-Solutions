@@ -2,6 +2,7 @@ const request = require('supertest');
 const app = require('../src/app'); // Importa tu app Express desde el nuevo app.js
 const services = require('../src/config/services'); // Para acceder a las URLs de los servicios
 const jwt = require('jsonwebtoken'); // Import jsonwebtoken
+const mockDocumentsService = require('./mock-documents-service'); // Import mock documents service
 
 // Define un JWT_SECRET para el entorno de pruebas
 process.env.JWT_SECRET = 'test_jwt_secret'; 
@@ -29,10 +30,22 @@ describe('API Gateway - Integration Tests', () => {
   let testUserToken;
   const testUserId = '60d5ec49f8c7a10015a4b7c8'; // Un ID de usuario de prueba
   const testUserRole = 'admin'; // Un rol de usuario de prueba
+  let mockDocumentsServer; // Para la instancia del servidor mock
 
-  beforeAll(() => {
+  beforeAll((done) => {
     // Generar un token JWT válido para el usuario de prueba
     testUserToken = jwt.sign({ id: testUserId, role: testUserRole }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+    // Iniciar el mock documents-service
+    mockDocumentsServer = mockDocumentsService.listen(5005, () => {
+      console.log('Mock Documents Service running on port 5005');
+      done();
+    });
+  });
+
+  afterAll((done) => {
+    // Cerrar el mock documents-service
+    mockDocumentsServer.close(done);
   });
 
   // Nota: Los tests de integración del API Gateway son complejos porque requieren que los microservicios estén corriendo.
