@@ -19,6 +19,11 @@ export const monitoringService = {
     return response.data;
   },
 
+  updateProductionData: async (id, data) => {
+    const response = await api.patch(`/monitoring/production/${id}`, data);
+    return response.data;
+  },
+
   getAlerts: async (filters = {}) => {
     const response = await api.get('/monitoring/alerts', { params: filters });
     return response.data;

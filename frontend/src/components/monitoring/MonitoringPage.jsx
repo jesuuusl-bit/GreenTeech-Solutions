@@ -22,6 +22,20 @@ export default function MonitoringPage() {
   const [startDate, setStartDate] = useState(format(subDays(new Date(), 1), 'yyyy-MM-dd'));
   const [endDate, setEndDate] = useState(format(new Date(), 'yyyy-MM-dd'));
 
+  // State for editing production data
+  const [editingPlantId, setEditingPlantId] = useState(null);
+  const [editFormData, setEditFormData] = useState({
+    plantId: '',
+    plantName: '',
+    plantType: 'solar',
+    production: {
+      current: '',
+      capacity: ''
+    },
+    efficiency: '',
+    timestamp: ''
+  });
+
   // State for new production data form
   const [newProductionData, setNewProductionData] = useState({
     plantId: '',
@@ -171,6 +185,69 @@ export default function MonitoringPage() {
     } catch (err) {
       console.error('Error adding production data:', err);
       toast.error('Error al añadir datos de producción.');
+    }
+  };
+
+  const handleEditClick = (plant) => {
+    setEditingPlantId(plant._id);
+    setEditFormData({
+      plantId: plant.plantId,
+      plantName: plant.plantName,
+      plantType: plant.plantType,
+      production: {
+        current: plant.production.current,
+        capacity: plant.production.capacity
+      },
+      efficiency: plant.efficiency,
+      timestamp: format(new Date(plant.timestamp), "yyyy-MM-dd'T'HH:mm")
+    });
+  };
+
+  const handleEditProductionDataChange = (e) => {
+    const { name, value } = e.target;
+    if (name.includes('.')) {
+      const [parent, child] = name.split('.');
+      setEditFormData(prev => ({
+        ...prev,
+        [parent]: {
+          ...prev[parent],
+          [child]: value
+        }
+      }));
+    } else {
+      setEditFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
+  };
+
+  const handleUpdateProductionDataSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      // Basic validation
+      if (!editFormData.plantId || !editFormData.plantName || !editFormData.plantType || !editFormData.production.current || !editFormData.production.capacity || !editFormData.efficiency || !editFormData.timestamp) {
+        toast.error('Todos los campos son obligatorios.');
+        return;
+      }
+
+      const dataToSubmit = {
+        ...editFormData,
+        production: {
+          current: Number(editFormData.production.current),
+          capacity: Number(editFormData.production.capacity)
+        },
+        efficiency: Number(editFormData.efficiency),
+        timestamp: new Date(editFormData.timestamp).toISOString()
+      };
+
+      await monitoringService.updateProductionData(editingPlantId, dataToSubmit);
+      toast.success('Datos de producción actualizados exitosamente.');
+      setEditingPlantId(null); // Hide form
+      fetchMonitoringData(); // Refresh data
+    } catch (err) {
+      console.error('Error updating production data:', err);
+      toast.error('Error al actualizar datos de producción.');
     }
   };
 
@@ -351,6 +428,130 @@ export default function MonitoringPage() {
           </div>
         )}
 
+        {/* Edit Production Data Form Modal */}
+        {editingPlantId && (
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex justify-center items-center">
+            <div className="bg-white p-8 rounded-lg shadow-xl max-w-md w-full">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">Editar Datos de Producción</h2>
+              <form onSubmit={handleUpdateProductionDataSubmit} className="space-y-4">
+                <div>
+                  <label htmlFor="editPlantId" className="block text-sm font-medium text-gray-700 mb-1">ID de Planta</label>
+                  <input
+                    type="text"
+                    id="editPlantId"
+                    name="plantId"
+                    value={editFormData.plantId}
+                    onChange={handleEditProductionDataChange}
+                    className="input-field"
+                    placeholder="Ej: solar-farm-001"
+                    required
+                    disabled // Plant ID should not be editable
+                  />
+                </div>
+                <div>
+                  <label htmlFor="editPlantName" className="block text-sm font-medium text-gray-700 mb-1">Nombre de Planta</label>
+                  <input
+                    type="text"
+                    id="editPlantName"
+                    name="plantName"
+                    value={editFormData.plantName}
+                    onChange={handleEditProductionDataChange}
+                    className="input-field"
+                    placeholder="Ej: Valle del Sol"
+                    required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="editPlantType" className="block text-sm font-medium text-gray-700 mb-1">Tipo de Planta</label>
+                  <select
+                    id="editPlantType"
+                    name="plantType"
+                    value={editFormData.plantType}
+                    onChange={handleEditProductionDataChange}
+                    className="input-field"
+                    required
+                  >
+                    <option value="solar">Solar</option>
+                    <option value="wind">Eólico</option>
+                    <option value="hybrid">Híbrido</option>
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="editCurrentProduction" className="block text-sm font-medium text-gray-700 mb-1">Producción Actual (MW)</label>
+                  <input
+                    type="number"
+                    id="editCurrentProduction"
+                    name="production.current"
+                    value={editFormData.production.current}
+                    onChange={handleEditProductionDataChange}
+                    className="input-field"
+                    placeholder="Ej: 50"
+                    step="0.01"
+                    required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="editCapacity" className="block text-sm font-medium text-gray-700 mb-1">Capacidad (MW)</label>
+                  <input
+                    type="number"
+                    id="editCapacity"
+                    name="production.capacity"
+                    value={editFormData.production.capacity}
+                    onChange={handleEditProductionDataChange}
+                    className="input-field"
+                    placeholder="Ej: 60"
+                    step="0.01"
+                    required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="editEfficiency" className="block text-sm font-medium text-gray-700 mb-1">Eficiencia (%)</label>
+                  <input
+                    type="number"
+                    id="editEfficiency"
+                    name="efficiency"
+                    value={editFormData.efficiency}
+                    onChange={handleEditProductionDataChange}
+                    className="input-field"
+                    placeholder="Ej: 85.5"
+                    min="0"
+                    max="100"
+                    step="0.1"
+                    required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="editTimestamp" className="block text-sm font-medium text-gray-700 mb-1">Fecha y Hora</label>
+                  <input
+                    type="datetime-local"
+                    id="editTimestamp"
+                    name="timestamp"
+                    value={editFormData.timestamp}
+                    onChange={handleEditProductionDataChange}
+                    className="input-field"
+                    required
+                  />
+                </div>
+                <div className="flex justify-end gap-3 mt-6">
+                  <button
+                    type="button"
+                    onClick={() => setEditingPlantId(null)}
+                    className="btn-secondary"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn-primary"
+                  >
+                    Guardar Cambios
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
         {/* KPI Cards */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
           <div className="card">
@@ -410,6 +611,9 @@ export default function MonitoringPage() {
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Última Actualización
                     </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Acciones
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -432,6 +636,14 @@ export default function MonitoringPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {format(new Date(plant.timestamp), 'MMM dd, HH:mm:ss')}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button
+                          onClick={() => handleEditClick(plant)}
+                          className="text-indigo-600 hover:text-indigo-900"
+                        >
+                          Editar
+                        </button>
                       </td>
                     </tr>
                   ))}
