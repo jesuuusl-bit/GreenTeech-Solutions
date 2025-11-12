@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Activity, AlertCircle, Zap, Clock, Loader2, Home, ChevronRight, Filter, CalendarDays, Factory } from 'lucide-react';
+import { Activity, AlertCircle, Zap, Clock, Loader2, Home, ChevronRight, Filter, CalendarDays, Factory, PlusCircle } from 'lucide-react';
 import { monitoringService } from '../../services/monitoringService';
 import toast from 'react-hot-toast';
 import {
@@ -15,11 +15,24 @@ export default function MonitoringPage() {
   const [historicalData, setHistoricalData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showAddDataForm, setShowAddDataForm] = useState(false); // State for form visibility
 
   // State for historical data filters
   const [selectedPlantId, setSelectedPlantId] = useState('');
   const [startDate, setStartDate] = useState(format(subDays(new Date(), 1), 'yyyy-MM-dd'));
   const [endDate, setEndDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+
+  // State for new production data form
+  const [newProductionData, setNewProductionData] = useState({
+    plantId: '',
+    plantName: '',
+    production: {
+      current: '',
+      capacity: ''
+    },
+    efficiency: '',
+    timestamp: format(new Date(), "yyyy-MM-dd'T'HH:mm")
+  });
 
   const fetchMonitoringData = async () => {
     try {
@@ -101,6 +114,64 @@ export default function MonitoringPage() {
     }
   };
 
+  const handleNewProductionDataChange = (e) => {
+    const { name, value } = e.target;
+    if (name.includes('.')) {
+      const [parent, child] = name.split('.');
+      setNewProductionData(prev => ({
+        ...prev,
+        [parent]: {
+          ...prev[parent],
+          [child]: value
+        }
+      }));
+    } else {
+      setNewProductionData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
+  };
+
+  const handleAddProductionDataSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      // Basic validation
+      if (!newProductionData.plantId || !newProductionData.plantName || !newProductionData.production.current || !newProductionData.production.capacity || !newProductionData.efficiency || !newProductionData.timestamp) {
+        toast.error('Todos los campos son obligatorios.');
+        return;
+      }
+
+      const dataToSubmit = {
+        ...newProductionData,
+        production: {
+          current: Number(newProductionData.production.current),
+          capacity: Number(newProductionData.production.capacity)
+        },
+        efficiency: Number(newProductionData.efficiency),
+        timestamp: new Date(newProductionData.timestamp).toISOString()
+      };
+
+      await monitoringService.createProductionData(dataToSubmit);
+      toast.success('Datos de producción añadidos exitosamente.');
+      setShowAddDataForm(false); // Hide form
+      setNewProductionData({ // Reset form
+        plantId: '',
+        plantName: '',
+        production: {
+          current: '',
+          capacity: ''
+        },
+        efficiency: '',
+        timestamp: format(new Date(), "yyyy-MM-dd'T'HH:mm")
+      });
+      fetchMonitoringData(); // Refresh data
+    } catch (err) {
+      console.error('Error adding production data:', err);
+      toast.error('Error al añadir datos de producción.');
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 p-8">
@@ -144,8 +215,125 @@ export default function MonitoringPage() {
           </span>
         </nav>
 
-        <h1 className="text-3xl font-bold text-gray-900 mb-6">Monitoreo en Tiempo Real</h1>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold text-gray-900">Monitoreo en Tiempo Real</h1>
+          <button 
+            onClick={() => setShowAddDataForm(true)}
+            className="btn-primary flex items-center"
+          >
+            <PlusCircle className="w-5 h-5 mr-2" />
+            Añadir Datos de Producción
+          </button>
+        </div>
         
+        {/* Add Production Data Form Modal */}
+        {showAddDataForm && (
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex justify-center items-center">
+            <div className="bg-white p-8 rounded-lg shadow-xl max-w-md w-full">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">Añadir Nuevos Datos de Producción</h2>
+              <form onSubmit={handleAddProductionDataSubmit} className="space-y-4">
+                <div>
+                  <label htmlFor="plantId" className="block text-sm font-medium text-gray-700 mb-1">ID de Planta</label>
+                  <input
+                    type="text"
+                    id="plantId"
+                    name="plantId"
+                    value={newProductionData.plantId}
+                    onChange={handleNewProductionDataChange}
+                    className="input-field"
+                    placeholder="Ej: solar-farm-001"
+                    required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="plantName" className="block text-sm font-medium text-gray-700 mb-1">Nombre de Planta</label>
+                  <input
+                    type="text"
+                    id="plantName"
+                    name="plantName"
+                    value={newProductionData.plantName}
+                    onChange={handleNewProductionDataChange}
+                    className="input-field"
+                    placeholder="Ej: Valle del Sol"
+                    required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="currentProduction" className="block text-sm font-medium text-gray-700 mb-1">Producción Actual (MW)</label>
+                  <input
+                    type="number"
+                    id="currentProduction"
+                    name="production.current"
+                    value={newProductionData.production.current}
+                    onChange={handleNewProductionDataChange}
+                    className="input-field"
+                    placeholder="Ej: 50"
+                    step="0.01"
+                    required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="capacity" className="block text-sm font-medium text-gray-700 mb-1">Capacidad (MW)</label>
+                  <input
+                    type="number"
+                    id="capacity"
+                    name="production.capacity"
+                    value={newProductionData.production.capacity}
+                    onChange={handleNewProductionDataChange}
+                    className="input-field"
+                    placeholder="Ej: 60"
+                    step="0.01"
+                    required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="efficiency" className="block text-sm font-medium text-gray-700 mb-1">Eficiencia (%)</label>
+                  <input
+                    type="number"
+                    id="efficiency"
+                    name="efficiency"
+                    value={newProductionData.efficiency}
+                    onChange={handleNewProductionDataChange}
+                    className="input-field"
+                    placeholder="Ej: 85.5"
+                    min="0"
+                    max="100"
+                    step="0.1"
+                    required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="timestamp" className="block text-sm font-medium text-gray-700 mb-1">Fecha y Hora</label>
+                  <input
+                    type="datetime-local"
+                    id="timestamp"
+                    name="timestamp"
+                    value={newProductionData.timestamp}
+                    onChange={handleNewProductionDataChange}
+                    className="input-field"
+                    required
+                  />
+                </div>
+                <div className="flex justify-end gap-3 mt-6">
+                  <button
+                    type="button"
+                    onClick={() => setShowAddDataForm(false)}
+                    className="btn-secondary"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn-primary"
+                  >
+                    Añadir Datos
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
         {/* KPI Cards */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
           <div className="card">
