@@ -1,0 +1,50 @@
+name: Backend Tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18' # Use a Node.js version compatible with your project
+
+    - name: Install root dependencies
+      run: npm install
+      working-directory: ./
+
+    - name: Run tests for API Gateway
+      run: npm install && npm test -- --coverage
+      working-directory: ./backend/api-gateway
+
+    - name: Run tests for Documents Service
+      run: npm install && npm test -- --coverage
+      working-directory: ./backend/documents-service
+
+    - name: Run tests for Monitoring Service
+      run: npm install && npm test -- --coverage
+      working-directory: ./backend/monitoring-service
+
+    - name: Run tests for Predictive Service
+      run: npm install && npm test -- --coverage
+      working-directory: ./backend/predictive-service
+
+    - name: Run tests for Projects Service
+      run: npm install && npm test -- --coverage
+      working-directory: ./backend/projects-service
+
+    - name: Run tests for Users Service
+      run: npm install && npm test -- --coverage
+      working-directory: ./backend/users-service
