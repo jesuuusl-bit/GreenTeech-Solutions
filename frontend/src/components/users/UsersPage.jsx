@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
-import { Users, UserPlus, Mail, Shield, AlertTriangle, Loader, RefreshCw } from 'lucide-react';
+import { Users, UserPlus, Mail, Shield, AlertTriangle, Loader, RefreshCw, Home, ChevronRight } from 'lucide-react'; // Added Home, ChevronRight
 import { toast } from 'react-hot-toast';
 import UserTable from './UserTable';
 import UserModal from './UserModal';
 import userService from '../../services/userService';
+import { useNavigate } from 'react-router-dom'; // Added useNavigate
 
 export default function UsersPage() {
+  const navigate = useNavigate(); // Added navigate hook
   const [users, setUsers] = useState([]);
   const [stats, setStats] = useState({
     total: 0,
@@ -126,6 +128,19 @@ export default function UsersPage() {
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-7xl mx-auto">
+        {/* Breadcrumb */}
+        <nav className="flex items-center space-x-2 text-sm text-gray-600 mb-6">
+          <button 
+            onClick={() => navigate('/dashboard')}
+            className="flex items-center hover:text-emerald-600 transition-colors"
+          >
+            <Home className="w-4 h-4 mr-1" />
+            Dashboard
+          </button>
+          <ChevronRight className="w-4 h-4" />
+          <span className="text-gray-900 font-medium">Gestión de Usuarios</span>
+        </nav>
+
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <div>
