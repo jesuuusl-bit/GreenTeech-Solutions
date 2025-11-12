@@ -50,11 +50,15 @@ const proxyRequest = async (req, res, serviceUrl) => {
         for (const key in req.body) {
           form.append(key, req.body[key]);
         }
-        config.data = form;
-        // Axios se encargará de establecer el Content-Type correcto para FormData
-        // Necesitamos fusionar los headers de form-data con los headers existentes
-        config.headers = { ...config.headers, ...form.getHeaders() };
-        console.log(`📦 Proxying multipart/form-data: Reconstructed FormData with headers.`);
+        const formBuffer = await new Promise((resolve, reject) => {
+          form.getLength((err, length) => {
+            if (err) return reject(err);
+            resolve(length);
+          });
+        });
+        config.headers = { ...config.headers, ...form.getHeaders(), 'Content-Length': formBuffer };
+        config.data = form; // Pass the form object directly, axios will handle the stream
+        console.log(`📦 Proxying multipart/form-data: Reconstructed FormData with headers and Content-Length.`);
       } else if (req.body && Object.keys(req.body).length > 0) {
         config.data = req.body;
         console.log(`📦 Proxying JSON/URL-encoded data: config.data set to req.body.`);
