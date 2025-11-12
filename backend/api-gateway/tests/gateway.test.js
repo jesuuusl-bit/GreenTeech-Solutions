@@ -1,5 +1,5 @@
 const request = require('supertest');
-const app = require('../src/server'); // Asume que tu app Express se exporta desde src/server.js
+const app = require('../src/app'); // Importa tu app Express desde el nuevo app.js
 const services = require('../src/config/services'); // Para acceder a las URLs de los servicios
 
 describe('API Gateway - Unit Tests', () => {
@@ -80,14 +80,4 @@ describe('API Gateway - Integration Tests', () => {
   // Añade más tests de integración aquí para otras rutas proxyadas
 });
 
-// Cierra el servidor Express después de que todos los tests hayan terminado
-let server;
-beforeAll((done) => {
-  server = app.listen(0, () => { // Escucha en un puerto aleatorio
-    done();
-  });
-});
 
-afterAll((done) => {
-  server.close(done);
-});
