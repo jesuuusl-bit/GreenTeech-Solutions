@@ -7,7 +7,7 @@ const weatherCache = {};
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos en milisegundos
 
 const weatherService = {
-  getWeatherData: async (city, countryCode = 'ES') => {
+  getWeatherData: async (city, countryCode = null) => {
     const apiKey = process.env.WEATHER_API_KEY;
     if (!apiKey) {
       throw new Error('OpenWeatherMap API key no configurada en las variables de entorno.');
