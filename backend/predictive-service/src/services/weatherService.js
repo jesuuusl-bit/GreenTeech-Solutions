@@ -22,7 +22,7 @@ const weatherService = {
       return weatherCache[cacheKey].data;
     }
 
-    const url = `${WEATHER_API_BASE_URL}/weather?q=${city},${countryCode}&appid=${apiKey}&units=metric&lang=es`;
+    const url = `${WEATHER_API_BASE_URL}/weather?q=${city}${countryCode ? `,${countryCode}` : ''}&appid=${apiKey}&units=metric&lang=es`;
     
     try {
       console.log(`🔍 Solicitando datos del clima para ${city} a OpenWeatherMap...`);
