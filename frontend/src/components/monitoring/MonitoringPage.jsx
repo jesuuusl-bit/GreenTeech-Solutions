@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Activity, AlertCircle, Zap, Clock, Loader2 } from 'lucide-react';
+import { Activity, AlertCircle, Zap, Clock, Loader2, Home, ChevronRight } from 'lucide-react';
 import { monitoringService } from '../../services/monitoringService';
 import toast from 'react-hot-toast';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
 import { format } from 'date-fns';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
 
 export default function MonitoringPage() {
+  const navigate = useNavigate(); // Initialize useNavigate
   const [currentProduction, setCurrentProduction] = useState(null);
   const [alerts, setAlerts] = useState([]);
   const [historicalData, setHistoricalData] = useState([]);
@@ -89,6 +91,21 @@ export default function MonitoringPage() {
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-7xl mx-auto">
+        {/* Breadcrumb */}
+        <nav className="flex items-center space-x-2 text-sm text-gray-600 mb-6">
+          <button 
+            onClick={() => navigate('/dashboard')}
+            className="flex items-center hover:text-emerald-600 transition-colors"
+          >
+            <Home className="w-4 h-4 mr-1" />
+            Dashboard
+          </button>
+          <ChevronRight className="w-4 h-4" />
+          <span className="text-gray-900 font-medium">
+            Monitoreo
+          </span>
+        </nav>
+
         <h1 className="text-3xl font-bold text-gray-900 mb-6">Monitoreo en Tiempo Real</h1>
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
