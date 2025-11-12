@@ -1,5 +1,5 @@
 const request = require('supertest');
-const app = require('../../src/server'); // Asume que tu app Express se exporta desde src/server.js
+const app = require('../src/server'); // Asume que tu app Express se exporta desde src/server.js
 const services = require('../../src/config/services'); // Para acceder a las URLs de los servicios
 
 describe('API Gateway - Unit Tests', () => {
