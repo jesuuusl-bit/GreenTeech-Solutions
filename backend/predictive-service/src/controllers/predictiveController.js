@@ -4,38 +4,38 @@ const { Regression } = require('ml-regression'); // Asumiendo que usas ml-regres
 
 // Controlador para obtener una predicción
 exports.getPrediction = async (req, res) => {
-  const { feature1, feature2, city } = req.body; // Añadimos 'city' como parámetro de entrada
+  const { rainProbability, windIntensity, city } = req.body;
 
-  if (feature1 === undefined || feature2 === undefined) {
-    return res.status(400).json({ message: 'Se requieren feature1 y feature2 para la predicción.' });
+  if (rainProbability === undefined || windIntensity === undefined) {
+    return res.status(400).json({ message: 'Se requieren probabilidad de lluvia e intensidad del viento para la predicción.' });
   }
 
   try {
     let weatherData = null;
+    let temp = 0;
+    let weatherDescription = 'Desconocido';
+
     if (city) {
-      // Obtener datos del clima si se proporciona una ciudad
       weatherData = await weatherService.getWeatherData(city);
       console.log('Datos del clima obtenidos:', weatherData);
-      // Aquí puedes extraer las características del clima que sean relevantes
-      // Por ejemplo: temperatura, humedad, velocidad del viento, etc.
-      // Para este ejemplo, solo usaremos la temperatura
+      if (weatherData && weatherData.main && weatherData.main.temp) {
+        temp = weatherData.main.temp;
+        weatherDescription = weatherData.weather[0].description;
+      }
     }
 
-    // Lógica de predicción (ejemplo simplificado)
-    // En un caso real, aquí integrarías tu modelo de ml-regression o simple-statistics
-    // y usarías las características del clima como entrada si están disponibles.
+    // Lógica de predicción mejorada con datos meteorológicos
+    // Esta es una fórmula de ejemplo. En un caso real, usarías tu modelo de ML.
+    // Ejemplo: Un valor predictivo que aumenta con la temperatura y el viento,
+    // y disminuye con la probabilidad de lluvia.
+    let predictedValue = (temp * 0.5) + (windIntensity * 1.2) - (rainProbability * 0.8);
 
-    let predictedValue;
-    if (weatherData && weatherData.main && weatherData.main.temp) {
-      // Ejemplo: la predicción se ve afectada por la temperatura
-      predictedValue = (feature1 * 0.5) + (feature2 * 0.3) + (weatherData.main.temp * 0.2);
-    } else {
-      predictedValue = (feature1 * 0.6) + (feature2 * 0.4);
-    }
+    // Asegurarse de que el valor no sea negativo si no tiene sentido para tu predicción
+    predictedValue = Math.max(0, predictedValue);
 
     // Guardar la predicción (opcional, si quieres mantener un historial)
     const newPrediction = new Prediction({
-      inputFeatures: { feature1, feature2, city },
+      inputFeatures: { rainProbability, windIntensity, city, temp, weatherDescription },
       predictedValue: predictedValue,
       timestamp: new Date(),
     });
@@ -44,8 +44,8 @@ exports.getPrediction = async (req, res) => {
     res.status(200).json({
       predictedValue: predictedValue,
       weatherInfo: weatherData ? {
-        temp: weatherData.main.temp,
-        description: weatherData.weather[0].description,
+        temp: temp,
+        description: weatherDescription,
         city: weatherData.name,
       } : undefined,
       message: 'Predicción generada exitosamente.'

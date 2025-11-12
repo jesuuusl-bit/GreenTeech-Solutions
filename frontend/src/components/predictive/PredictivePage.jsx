@@ -8,9 +8,9 @@ import { useNavigate } from 'react-router-dom';
 export default function PredictivePage() {
   const navigate = useNavigate();
   const [predictionInput, setPredictionInput] = useState({
-    feature1: 10,
-    feature2: 20,
-    city: 'Madrid' // Añadir campo para la ciudad
+    rainProbability: 20, // Ejemplo: 20%
+    windIntensity: 5,    // Ejemplo: 5 m/s
+    city: 'Madrid'
   });
   const [predictionResult, setPredictionResult] = useState(null);
   const [historicalData, setHistoricalData] = useState([]);
@@ -100,29 +100,32 @@ export default function PredictivePage() {
           <h2 className="text-2xl font-semibold mb-4 text-gray-900">Realizar Predicción</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
             <div>
-              <label htmlFor="feature1" className="block text-sm font-medium text-gray-700">
-                Característica 1:
+              <label htmlFor="rainProbability" className="block text-sm font-medium text-gray-700">
+                Probabilidad de Lluvia (%):
               </label>
               <input
                 type="number"
-                id="feature1"
-                name="feature1"
-                value={predictionInput.feature1}
+                id="rainProbability"
+                name="rainProbability"
+                value={predictionInput.rainProbability}
                 onChange={handleInputChange}
                 className="input-field"
+                min="0"
+                max="100"
               />
             </div>
             <div>
-              <label htmlFor="feature2" className="block text-sm font-medium text-gray-700">
-                Característica 2:
+              <label htmlFor="windIntensity" className="block text-sm font-medium text-gray-700">
+                Intensidad del Viento (m/s):
               </label>
               <input
                 type="number"
-                id="feature2"
-                name="feature2"
-                value={predictionInput.feature2}
+                id="windIntensity"
+                name="windIntensity"
+                value={predictionInput.windIntensity}
                 onChange={handleInputChange}
                 className="input-field"
+                min="0"
               />
             </div>
             <div>
