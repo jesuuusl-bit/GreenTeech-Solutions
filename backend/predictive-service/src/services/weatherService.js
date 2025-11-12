@@ -48,6 +48,9 @@ const weatherService = {
 
     const url = `${WEATHER_API_BASE_URL}/weather?q=${translatedCity}${countryCode ? `,${countryCode}` : ''}&appid=${apiKey}&units=metric&lang=es`;
     
+    console.log(`🔑 Usando API Key: ${apiKey ? apiKey.substring(0, 5) + '...' : 'No configurada'}`);
+    console.log(`🌐 Solicitando a URL: ${url}`);
+
     try {
       console.log(`🔍 Solicitando datos del clima para ${translatedCity} a OpenWeatherMap...`);
       const response = await axios.get(url);
@@ -57,17 +60,17 @@ const weatherService = {
         data: response.data,
         timestamp: now,
       };
-      console.log(`💾 Datos del clima para ${city} almacenados en caché.`);
+      console.log(`💾 Datos del clima para ${translatedCity} almacenados en caché.`);
       return response.data;
     } catch (error) {
-      console.error(`❌ Error al obtener datos del clima para ${city}:`, error.message);
+      console.error(`❌ Error al obtener datos del clima para ${translatedCity}:`, error.message);
       if (error.response) {
         console.error('Respuesta de error de la API:', error.response.data);
         // Manejo específico para 401 (API Key inválida) o 404 (Ciudad no encontrada)
         if (error.response.status === 401) {
           throw new Error('API Key de OpenWeatherMap inválida o no autorizada.');
         } else if (error.response.status === 404) {
-          throw new Error(`Ciudad '${city}' no encontrada por la API del clima.`);
+          throw new Error(`Ciudad '${translatedCity}' no encontrada por la API del clima.`);
         } else if (error.response.status === 429) {
           throw new Error('Límite de llamadas a la API de OpenWeatherMap excedido. Inténtalo de nuevo más tarde.');
         }
