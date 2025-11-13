@@ -81,6 +81,33 @@ describe('API Gateway - Integration Tests', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    // Mock axios as a function to return a default resolved value
+    axios.mockResolvedValue({ status: 200, data: { success: true, message: 'Mocked response' }, headers: {} });
+
+    // Specific mocks for axios.get and axios.post can still be used if needed for different responses
+    // For example, if a specific GET request needs a different data structure:
+    axios.get.mockImplementation((url, config) => {
+      if (url.includes('/health')) {
+        return Promise.resolve({ status: 200, data: { status: 'healthy', service: 'users-service' }, headers: {} });
+      }
+      if (url.includes('/users')) {
+        return Promise.resolve({ status: 200, data: { success: true, data: [{ name: 'Test User' }] }, headers: {} });
+      }
+      if (url.includes('/projects')) {
+        return Promise.resolve({ status: 200, data: { success: true, data: [{ name: 'Project Alpha' }] }, headers: {} });
+      }
+      if (url.includes('/monitoring')) {
+        return Promise.resolve({ status: 200, data: { success: true, data: [{ plantId: 'plant1' }] }, headers: {} });
+      }
+      return Promise.resolve({ status: 200, data: { success: true, message: 'Default GET mock' }, headers: {} });
+    });
+
+    axios.post.mockImplementation((url, data, config) => {
+      if (url.includes('/login')) {
+        return Promise.resolve({ status: 200, data: { success: true, token: 'mockToken' }, headers: {} });
+      }
+      return Promise.resolve({ status: 200, data: { success: true, message: 'Default POST mock' }, headers: {} });
+    });
   });
 
   // Test de integración 1: Health check del users-service (debería ser proxyado)
