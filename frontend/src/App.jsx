@@ -25,6 +25,9 @@ import PredictivePage from './components/predictive/PredictivePage';
 import DocumentsPage from './components/documents/DocumentsPage';
 import UsersPage from './components/users/UsersPage';
 
+//import sentry
+import * as Sentry from "@sentry/react";
+
 export default function App() {
   return (
     <AuthProvider>
