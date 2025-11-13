@@ -57,27 +57,45 @@ describe('Monitoring Service - Integration Tests', () => {
     ProductionData.sort.mockResolvedValue([]);
     ProductionData.findByIdAndUpdate.mockResolvedValue(null);
     ProductionData.create.mockResolvedValue(null);
+    // Mock for aggregate to return sample data for getCurrentProduction
+    ProductionData.aggregate.mockResolvedValue([
+      { _id: 'plantA', plantId: 'plantA', production: { current: 100, capacity: 120 }, efficiency: 83.33 },
+      { _id: 'plantB', plantId: 'plantB', production: { current: 150, capacity: 200 }, efficiency: 75.00 },
+    ]);
     Alert.find.mockReturnThis();
-    Alert.sort.mockResolvedValue([]);
+    Alert.sort.mockReturnThis();
+    Alert.limit.mockResolvedValue([]);
     Alert.create.mockResolvedValue(null);
   });
 
-  // Test 1: GET /monitoring - Debería devolver una lista de datos de producción
+  // Test 1: GET /monitoring should return a list of production data
   test('GET /monitoring should return a list of production data', async () => {
-    const mockData = [
-      { _id: new mongoose.Types.ObjectId(), plantId: 'plantA', efficiency: 85, value: 1000 },
-      { _id: new mongoose.Types.ObjectId(), plantId: 'plantB', efficiency: 90, value: 1200 },
+    const mockAggregatedData = [
+      { _id: 'plantA', plantId: 'plantA', production: { current: 100, capacity: 120 }, efficiency: 83.33 },
+      { _id: 'plantB', plantId: 'plantB', production: { current: 150, capacity: 200 }, efficiency: 75.00 },
     ];
-    ProductionData.find.mockReturnThis();
-    ProductionData.populate.mockReturnThis();
-    ProductionData.sort.mockResolvedValue(mockData);
+    // ProductionData.aggregate.mockResolvedValue(mockAggregatedData); // This is already set in beforeEach
 
     const res = await request(app).get('/monitoring/production/current');
 
+    // Expected response body structure based on controller logic
+    const expectedResponseBody = {
+      success: true,
+      data: {
+        plants: mockAggregatedData.map(plant => ({ ...plant, _id: plant._id.toString() })), // Convert _id to string
+        summary: {
+          totalProduction: '250.00', // 100 + 150
+          totalCapacity: '320.00',   // 120 + 200
+          averageEfficiency: '79.17', // (83.33 + 75.00) / 2 = 79.165 -> 79.17
+          plantCount: 2,
+          unit: 'MW'
+        }
+      }
+    };
+
     expect(res.statusCode).toEqual(200);
-    expect(res.body.success).toBe(true);
-    expect(res.body.data).toEqual(mockData);
-    expect(ProductionData.find).toHaveBeenCalledTimes(1);
+    expect(res.body).toEqual(expectedResponseBody);
+    expect(ProductionData.aggregate).toHaveBeenCalledTimes(1);
   });
 
   // Test 2: POST /monitoring - Debería crear nuevos datos de producción y una alerta si la eficiencia es baja
