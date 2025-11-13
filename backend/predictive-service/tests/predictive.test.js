@@ -5,16 +5,22 @@ const mongoose = require('mongoose'); // Re-add global import
 
 // Mock de los modelos y servicios
 jest.mock('../src/models/Prediction', () => {
-  const mongoose = require('mongoose'); // Import mongoose inside the mock factory
-  return {
-    find: jest.fn().mockReturnThis(),
-    populate: jest.fn().mockReturnThis(),
-    sort: jest.fn().mockResolvedValue([]),
-    mockImplementation: jest.fn((data) => ({
-      ...data,
-      save: jest.fn().mockResolvedValue({ _id: new mongoose.Types.ObjectId(), ...data }),
-    })),
-  };
+  const mongoose = require('mongoose');
+  const MockPrediction = jest.fn(); // This will be our mock constructor
+  
+  // Mock static methods
+  MockPrediction.find = jest.fn().mockReturnThis();
+  MockPrediction.populate = jest.fn().mockReturnThis();
+  MockPrediction.sort = jest.fn().mockResolvedValue([]);
+
+  // Default implementation for the constructor
+  MockPrediction.mockImplementation((data) => ({
+    ...data,
+    _id: new mongoose.Types.ObjectId(),
+    save: jest.fn().mockResolvedValue(data), // Default save behavior
+  }));
+
+  return MockPrediction;
 });
 jest.mock('../src/services/weatherService');
 
@@ -31,84 +37,86 @@ describe('Predictive Service - Unit Tests', () => {
     jest.clearAllMocks();
   });
 
-  // Test para getWeatherData (del controlador, que usa el servicio)
-  test('getWeatherData should return weather data for a city', async () => {
-    req.query = { city: 'London' };
-    const mockWeatherData = { temperature: 15, description: 'clear sky' };
+  // Test para getPrediction (del controlador, que usa el servicio)
+  test('getPrediction should return weather data for a city', async () => {
+    req.body = { city: 'London' }; // getPrediction uses req.body, not req.query
+    const mockWeatherData = { temperature: 15, description: 'clear sky', main: { temp: 15 }, weather: [{ description: 'clear sky' }], wind: { speed: 5 } };
     weatherService.getWeatherData.mockResolvedValue(mockWeatherData);
 
-    await predictiveController.getWeatherData(req, res);
-
-    expect(weatherService.getWeatherData).toHaveBeenCalledWith('London', null); // toBe
-    expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-      success: true,
-      data: mockWeatherData,
-    }));
-    expect(res.json.mock.calls[0][0].data).toHaveProperty('temperature', 15); // toHaveProperty
-  });
-
-  // Test para getWeatherData con error
-  test('getWeatherData should return 404 if city not found', async () => {
-    req.query = { city: 'NonExistentCity' };
-    weatherService.getWeatherData.mockRejectedValue(new Error('City not found'));
-
-    await predictiveController.getWeatherData(req, res);
-
-    expect(res.status).toHaveBeenCalledWith(404);
-    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-      success: false,
-      message: expect.stringContaining('City not found'),
-    })); // toContain
-  });
-
-  // Test para createPrediction
-  test('createPrediction should create a new prediction', async () => {
-    req.body = {
-      city: 'Paris',
-      projectId: new mongoose.Types.ObjectId(),
-      predictionType: 'weather'
-    };
-    const mockWeatherData = { temperature: 20, description: 'sunny', rain: { '1h': 0 }, wind: { speed: 5 } };
-    weatherService.getWeatherData.mockResolvedValue(mockWeatherData);
-
-    const mockSavedPrediction = { _id: new mongoose.Types.ObjectId(), ...req.body, data: { temperature: 20 } };
-    Prediction.mockImplementationOnce(() => ({
-      ...req.body,
-      data: { temperature: 20, description: 'sunny', rainProbability: 0, windIntensity: 5 },
+    // Mock the Prediction constructor for this test
+    const mockSavedPrediction = { _id: new mongoose.Types.ObjectId(), projectId: new mongoose.Types.ObjectId('60d5ec49f8c7a10015a4b7a1'), predictionType: 'weather', data: { city: 'London', temp: 15, weatherDescription: 'clear sky', rainProbability: 0, windIntensity: 5 }, predictedValue: 15 * 0.5 + 5 * 1.2 - 0 * 0.8 };
+    Prediction.mockImplementationOnce((data) => ({
+      ...data,
+      _id: mockSavedPrediction._id,
       save: jest.fn().mockResolvedValue(mockSavedPrediction),
     }));
 
-    await predictiveController.createPrediction(req, res);
+    await predictiveController.getPrediction(req, res);
 
-    expect(weatherService.getWeatherData).toHaveBeenCalledWith('Paris', null);
-    expect(res.status).toHaveBeenCalledWith(201);
-    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-      success: true,
-      data: expect.objectContaining({
-        predictionType: 'weather',
-        data: expect.objectContaining({ temperature: 20 }),
-      }),
-    }));
-    expect(res.json.mock.calls[0][0].data.data.description).toEqual('sunny'); // toEqual
-  });
-
-  // Test para getPredictions
-  test('getPredictions should return all predictions', async () => {
-    const mockPredictions = [{ predictionType: 'weather', data: { city: 'Rome' }, _id: new mongoose.Types.ObjectId() }];
-    Prediction.find.mockReturnThis();
-    Prediction.sort.mockResolvedValue(mockPredictions);
-
-    await predictiveController.getPredictions(req, res);
-
+    expect(weatherService.getWeatherData).toHaveBeenCalledWith('London'); // weatherService.getWeatherData only takes city
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-      success: true,
-      data: expect.arrayContaining([
-        expect.objectContaining({ predictionType: 'weather' }),
-      ]),
+      predictedValue: expect.any(Number),
+      weatherInfo: expect.objectContaining({ temp: 15 }), // Changed from data to weatherInfo
     }));
-    expect(res.json.mock.calls[0][0].data[0]).toHaveProperty('predictionType', 'weather'); // toHaveProperty
+    expect(res.json.mock.calls[0][0].weatherInfo).toHaveProperty('description', 'clear sky');
+  });
+
+  // Test para getPrediction con error (city not provided)
+  test('getPrediction should return 400 if city not provided', async () => {
+    req.body = {}; // No city provided
+    await predictiveController.getPrediction(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+      message: expect.stringContaining('Se requiere la ciudad'),
+    }));
+  });
+
+  // Test para createPrediction (via getPrediction) should create a new prediction record
+  test('createPrediction (via getPrediction) should create a new prediction record', async () => {
+    req.body = { city: 'Paris' };
+    const mockWeatherData = { temperature: 20, description: 'sunny', main: { temp: 20 }, weather: [{ description: 'sunny' }], wind: { speed: 5 }, rain: { '1h': 0 } };
+    weatherService.getWeatherData.mockResolvedValue(mockWeatherData);
+
+    const mockSavedPrediction = { _id: new mongoose.Types.ObjectId(), projectId: new mongoose.Types.ObjectId('60d5ec49f8c7a10015a4b7a1'), predictionType: 'weather', data: { city: 'Paris', temp: 20, weatherDescription: 'sunny', rainProbability: 0, windIntensity: 5 }, predictedValue: expect.any(Number) };
+    Prediction.mockImplementationOnce((data) => ({
+      ...data,
+      _id: mockSavedPrediction._id,
+      save: jest.fn().mockResolvedValue(mockSavedPrediction),
+    }));
+
+    await predictiveController.getPrediction(req, res); // Call getPrediction
+
+    expect(weatherService.getWeatherData).toHaveBeenCalledWith('Paris');
+    expect(res.status).toHaveBeenCalledWith(200); // getPrediction returns 200 on success
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+      predictedValue: expect.any(Number),
+      weatherInfo: expect.objectContaining({ temp: 20 }),
+    }));
+    // Verify that Prediction constructor was called and save was called
+    expect(Prediction).toHaveBeenCalledTimes(1);
+    expect(Prediction.mock.calls[0][0]).toHaveProperty('predictionType', 'weather');
+    expect(Prediction.mock.results[0].value.save).toHaveBeenCalledTimes(1);
+  });
+
+
+  // Test para getHistoricalData
+  test('getHistoricalData should return historical prediction data', async () => {
+    const mockHistoricalData = [
+      { timestamp: new Date(), predictedValue: 10, _id: new mongoose.Types.ObjectId() },
+      { timestamp: new Date(), predictedValue: 20, _id: new mongoose.Types.ObjectId() },
+    ];
+    Prediction.find.mockReturnThis();
+    Prediction.sort.mockReturnThis();
+    Prediction.limit.mockResolvedValue(mockHistoricalData); // Assuming limit is called
+
+    await predictiveController.getHistoricalData(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith(expect.arrayContaining([
+      expect.objectContaining({ name: expect.any(String), value: expect.any(Number) }),
+    ]));
+    expect(res.json.mock.calls[0][0].length).toBe(2);
   });
 
   // Puedes añadir más tests unitarios aquí para la lógica de simulaciones, etc.
