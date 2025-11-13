@@ -150,14 +150,14 @@ describe('Monitoring Service - Integration Tests', () => {
       { _id: new mongoose.Types.ObjectId(), type: 'low-production', severity: 'high', plantId: 'plantA' },
       { _id: new mongoose.Types.ObjectId(), type: 'maintenance', severity: 'low', plantId: 'plantB' },
     ];
-    Alert.find.mockReturnThis();
-    Alert.sort.mockResolvedValue(mockAlerts);
+    // Set the resolved value for the limit method of the chained mock
+    Alert.find().sort().limit.mockResolvedValue(mockAlerts.map(alert => ({ ...alert, _id: alert._id.toString() }))); // Convert _id to string
 
     const res = await request(app).get('/monitoring/alerts');
 
     expect(res.statusCode).toEqual(200);
     expect(res.body.success).toBe(true);
-    expect(res.body.data).toEqual(mockAlerts);
+    expect(res.body.data).toEqual(mockAlerts.map(alert => ({ ...alert, _id: alert._id.toString() }))); // Convert _id to string
     expect(Alert.find).toHaveBeenCalledTimes(1);
   });
 
