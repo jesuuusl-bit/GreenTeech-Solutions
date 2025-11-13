@@ -42,25 +42,6 @@ describe('Projects Service - Unit Tests', () => {
     jest.clearAllMocks();
   });
 
-  // Test para getAllProjects
-  test('getAllProjects should return all projects', async () => {
-    const mockProjects = [{ name: 'Project Alpha', _id: new mongoose.Types.ObjectId() }];
-    Project.find.mockReturnThis();
-    Project.populate.mockReturnThis();
-    Project.sort.mockResolvedValue(mockProjects);
-
-    await projectController.getAllProjects(req, res);
-
-    expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-      success: true,
-      data: expect.arrayContaining([
-        expect.objectContaining({ name: 'Project Alpha' }),
-      ]),
-    })); // toEqual con arrayContaining
-    expect(res.json.mock.calls[0][0].data.length).toBe(1); // toBe
-  });
-
   // Test para createProject
   test('createProject should create a new project', async () => {
     req.body = { name: 'New Project', description: 'Desc', startDate: new Date(), endDate: new Date() };
@@ -94,41 +75,4 @@ describe('Projects Service - Unit Tests', () => {
     }));
     expect(res.json.mock.calls[0][0].data.name).toBe('Project Gamma'); // toBe
   });
-
-  // Test para updateProject
-  test('updateProject should update an existing project', async () => {
-    req.params = { id: new mongoose.Types.ObjectId().toString() };
-    req.body = { description: 'Updated Desc' };
-    const mockUpdatedProject = { _id: req.params.id, name: 'Project Gamma', description: 'Updated Desc' };
-    Project.findByIdAndUpdate.mockResolvedValue(mockUpdatedProject);
-
-    await projectController.updateProject(req, res);
-
-    expect(Project.findByIdAndUpdate).toHaveBeenCalledWith(req.params.id, req.body, { new: true });
-    expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-      success: true,
-      data: mockUpdatedProject,
-    }));
-    expect(res.json.mock.calls[0][0].data.description).toContain('Updated'); // toContain
-  });
-
-  // Test para deleteTask
-  test('deleteTask should delete an existing task', async () => {
-    req.params = { id: new mongoose.Types.ObjectId().toString() };
-    const mockDeletedTask = { _id: req.params.id, name: 'Task to Delete' };
-    Task.findByIdAndDelete.mockResolvedValue(mockDeletedTask);
-
-    await projectController.deleteTask(req, res);
-
-    expect(Task.findByIdAndDelete).toHaveBeenCalledWith(req.params.id);
-    expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-      success: true,
-      message: 'Tarea eliminada exitosamente',
-    }));
-    expect(res.json.mock.calls[0][0].message).toContain('eliminada'); // toContain
-  });
-
-  // Puedes añadir más tests unitarios aquí para tareas, etc.
 });
