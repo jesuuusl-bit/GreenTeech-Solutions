@@ -6,18 +6,23 @@ const weatherService = require('../../predictive-service/src/services/weatherSer
 
 // Mock de los modelos y servicios
 jest.mock('../../predictive-service/src/models/Prediction', () => {
-  const mongoose = jest.requireActual('mongoose'); // Import mongoose here
-  return {
-    find: jest.fn().mockReturnThis(),
-    populate: jest.fn().mockReturnThis(),
-    sort: jest.fn().mockResolvedValue([]),
-    create: jest.fn().mockResolvedValue(null),
-    // Mock del constructor para new Prediction()
-    mockImplementation: jest.fn((data) => ({
-      ...data,
-      save: jest.fn().mockResolvedValue({ _id: new mongoose.Types.ObjectId(), ...data }),
-    })),
-  };
+  const mongoose = jest.requireActual('mongoose');
+
+  const mockLimit = jest.fn();
+  const mockSort = jest.fn().mockReturnValue({ limit: mockLimit });
+  const mockFind = jest.fn().mockReturnValue({ sort: mockSort });
+
+  const MockPrediction = jest.fn((data) => ({ // This is the constructor mock
+    ...data,
+    save: jest.fn().mockResolvedValue({ _id: new mongoose.Types.ObjectId(), ...data }),
+  }));
+
+  MockPrediction.find = mockFind;
+  MockPrediction.populate = jest.fn().mockReturnThis();
+  MockPrediction.create = jest.fn().mockResolvedValue(null);
+  MockPrediction._mockLimit = mockLimit; // Expose mockLimit
+
+  return MockPrediction;
 });
 jest.mock('../../predictive-service/src/services/weatherService');
 
@@ -53,11 +58,16 @@ describe('Predictive Service - Integration Tests', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    Prediction.find.mockReturnThis();
+    // Prediction mocks
+    Prediction.find.mockReturnValue({
+      sort: jest.fn().mockReturnValue({
+        limit: Prediction._mockLimit, // Use the exported mockLimit
+      }),
+    });
     Prediction.populate.mockReturnThis();
-    Prediction.sort.mockResolvedValue([]);
     Prediction.create.mockResolvedValue(null);
-    Prediction.mockImplementation.mockClear();
+    Prediction.mockImplementation.mockClear(); // Clear mockImplementation calls
+    Prediction._mockLimit.mockResolvedValue([]); // Set default resolved value for limit
     weatherService.getWeatherData.mockResolvedValue(null);
   });
 
@@ -103,15 +113,14 @@ describe('Predictive Service - Integration Tests', () => {
       { _id: new mongoose.Types.ObjectId(), timestamp: new Date(), predictedValue: 10 },
       { _id: new mongoose.Types.ObjectId(), timestamp: new Date(), predictedValue: 20 },
     ];
-    Prediction.find.mockReturnThis();
-    Prediction.sort.mockReturnThis();
-    Prediction.limit.mockResolvedValue(mockHistoricalData);
+    // Set the resolved value for the limit method of the chained mock
+    Prediction._mockLimit.mockResolvedValue(mockHistoricalData.map(data => ({ ...data, _id: data._id.toString() }))); // Convert _id to string
 
     const res = await request(app).get('/predictive/historical');
 
     expect(res.statusCode).toEqual(200);
     expect(res.body.length).toEqual(2);
-    expect(res.body[0]).toHaveProperty('value', 10);
+    expect(res.body[0]).toHaveProperty('predictedValue', 10); // Changed from 'value' to 'predictedValue'
     expect(Prediction.find).toHaveBeenCalledTimes(1);
   });
 
