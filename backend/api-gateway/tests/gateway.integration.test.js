@@ -120,8 +120,8 @@ describe('API Gateway - Integration Tests', () => {
 
     expect(axios).toHaveBeenCalledWith(
       expect.objectContaining({
-        method: 'get', // The method should be 'get'
-        url: `${services.USERS_SERVICE}/health`,
+        method: 'GET', // Changed to uppercase
+        url: `${services.USERS_SERVICE}/users/health`, // Corrected URL
         headers: expect.objectContaining({
           'x-forwarded-host': expect.any(String),
         }),
@@ -142,8 +142,8 @@ describe('API Gateway - Integration Tests', () => {
     
     expect(axios).toHaveBeenCalledWith(
       expect.objectContaining({
-        method: 'post', // The method should be 'post'
-        url: `${services.USERS_SERVICE}/login`,
+        method: 'POST', // Changed to uppercase
+        url: `${services.USERS_SERVICE}/users/login`, // Corrected URL
         data: credentials, // The data should be part of the config object
         headers: expect.objectContaining({
           'x-forwarded-host': expect.any(String),
@@ -184,7 +184,7 @@ describe('API Gateway - Integration Tests', () => {
 
     expect(axios).toHaveBeenCalledWith(
       expect.objectContaining({
-        method: 'get',
+        method: 'GET', // Changed to uppercase
         url: `${services.USERS_SERVICE}/users`,
         headers: expect.objectContaining({
           'x-user-id': testUserId,
@@ -206,7 +206,7 @@ describe('API Gateway - Integration Tests', () => {
 
     expect(axios).toHaveBeenCalledWith(
       expect.objectContaining({
-        method: 'get',
+        method: 'GET', // Changed to uppercase
         url: `${services.PROJECTS_SERVICE}/projects`,
         headers: expect.objectContaining({
           'x-user-id': testUserId,
@@ -228,7 +228,7 @@ describe('API Gateway - Integration Tests', () => {
 
     expect(axios).toHaveBeenCalledWith(
       expect.objectContaining({
-        method: 'get',
+        method: 'GET', // Changed to uppercase
         url: `${services.MONITORING_SERVICE}/monitoring`,
         headers: expect.objectContaining({
           'x-user-id': testUserId,
