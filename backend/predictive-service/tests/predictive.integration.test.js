@@ -5,17 +5,20 @@ const Prediction = require('../../predictive-service/src/models/Prediction');
 const weatherService = require('../../predictive-service/src/services/weatherService');
 
 // Mock de los modelos y servicios
-jest.mock('../../predictive-service/src/models/Prediction', () => ({
-  find: jest.fn().mockReturnThis(),
-  populate: jest.fn().mockReturnThis(),
-  sort: jest.fn().mockResolvedValue([]),
-  create: jest.fn().mockResolvedValue(null),
-  // Mock del constructor para new Prediction()
-  mockImplementation: jest.fn((data) => ({
-    ...data,
-    save: jest.fn().mockResolvedValue({ _id: new mongoose.Types.ObjectId(), ...data }),
-  })),
-}));
+jest.mock('../../predictive-service/src/models/Prediction', () => {
+  const mongoose = jest.requireActual('mongoose'); // Import mongoose here
+  return {
+    find: jest.fn().mockReturnThis(),
+    populate: jest.fn().mockReturnThis(),
+    sort: jest.fn().mockResolvedValue([]),
+    create: jest.fn().mockResolvedValue(null),
+    // Mock del constructor para new Prediction()
+    mockImplementation: jest.fn((data) => ({
+      ...data,
+      save: jest.fn().mockResolvedValue({ _id: new mongoose.Types.ObjectId(), ...data }),
+    })),
+  };
+});
 jest.mock('../../predictive-service/src/services/weatherService');
 
 // Mock de mongoose.connect para evitar la conexión real a la DB
