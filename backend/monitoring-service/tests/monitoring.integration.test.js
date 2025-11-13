@@ -14,13 +14,14 @@ jest.mock('../../monitoring-service/src/models/ProductionData', () => ({
   aggregate: jest.fn().mockResolvedValue([]), // Added aggregate mock
 }));
 jest.mock('../../monitoring-service/src/models/Alert', () => {
-  const mockLimit = jest.fn().mockResolvedValue([]);
-  const mockSort = jest.fn().mockReturnValue({ limit: mockLimit }); // sort returns an object with limit
-  const mockFind = jest.fn().mockReturnValue({ sort: mockSort }); // find returns an object with sort
+  const mockLimit = jest.fn();
+  const mockSort = jest.fn().mockReturnValue({ limit: mockLimit });
+  const mockFind = jest.fn().mockReturnValue({ sort: mockSort });
 
   return {
     find: mockFind,
-    create: jest.fn().mockResolvedValue(null),
+    create: jest.fn(),
+    _mockLimit: mockLimit, // Export mockLimit
   };
 });
 
@@ -69,10 +70,11 @@ describe('Monitoring Service - Integration Tests', () => {
     // Reset Alert mocks with explicit chaining
     Alert.find.mockReturnValue({
       sort: jest.fn().mockReturnValue({
-        limit: jest.fn().mockResolvedValue([]),
+        limit: Alert._mockLimit, // Use the exported mockLimit
       }),
     });
     Alert.create.mockResolvedValue(null);
+    Alert._mockLimit.mockResolvedValue([]); // Set default resolved value
   });
 
   // Test 1: GET /monitoring should return a list of production data
@@ -151,7 +153,7 @@ describe('Monitoring Service - Integration Tests', () => {
       { _id: new mongoose.Types.ObjectId(), type: 'maintenance', severity: 'low', plantId: 'plantB' },
     ];
     // Set the resolved value for the limit method of the chained mock
-    Alert.find().sort().limit.mockResolvedValue(mockAlerts.map(alert => ({ ...alert, _id: alert._id.toString() }))); // Convert _id to string
+    Alert._mockLimit.mockResolvedValue(mockAlerts.map(alert => ({ ...alert, _id: alert._id.toString() }))); // Convert _id to string
 
     const res = await request(app).get('/monitoring/alerts');
 
