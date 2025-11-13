@@ -66,7 +66,7 @@ describe('Predictive Service - Integration Tests', () => {
     });
     Prediction.populate.mockReturnThis();
     Prediction.create.mockResolvedValue(null);
-    Prediction.mockImplementation.mockClear(); // Clear mockImplementation calls
+    Prediction.mockClear(); // Clear mockImplementation calls
     Prediction._mockLimit.mockResolvedValue([]); // Set default resolved value for limit
     weatherService.getWeatherData.mockResolvedValue(null);
   });
