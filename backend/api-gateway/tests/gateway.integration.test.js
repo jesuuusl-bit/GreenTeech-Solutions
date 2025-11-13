@@ -118,9 +118,10 @@ describe('API Gateway - Integration Tests', () => {
       .get('/api/users/health')
       .expect(200);
 
-    expect(axios.get).toHaveBeenCalledWith(
-      `${services.USERS_SERVICE}/health`,
+    expect(axios).toHaveBeenCalledWith(
       expect.objectContaining({
+        method: 'get', // The method should be 'get'
+        url: `${services.USERS_SERVICE}/health`,
         headers: expect.objectContaining({
           'x-forwarded-host': expect.any(String),
         }),
@@ -139,10 +140,11 @@ describe('API Gateway - Integration Tests', () => {
       .send(credentials)
       .expect(200);
     
-    expect(axios.post).toHaveBeenCalledWith(
-      `${services.USERS_SERVICE}/login`,
-      credentials,
+    expect(axios).toHaveBeenCalledWith(
       expect.objectContaining({
+        method: 'post', // The method should be 'post'
+        url: `${services.USERS_SERVICE}/login`,
+        data: credentials, // The data should be part of the config object
         headers: expect.objectContaining({
           'x-forwarded-host': expect.any(String),
         }),
@@ -180,9 +182,10 @@ describe('API Gateway - Integration Tests', () => {
       .set('Authorization', `Bearer ${testUserToken}`)
       .expect(200);
 
-    expect(axios.get).toHaveBeenCalledWith(
-      `${services.USERS_SERVICE}/users`,
+    expect(axios).toHaveBeenCalledWith(
       expect.objectContaining({
+        method: 'get',
+        url: `${services.USERS_SERVICE}/users`,
         headers: expect.objectContaining({
           'x-user-id': testUserId,
           'x-user-role': testUserRole,
@@ -201,9 +204,10 @@ describe('API Gateway - Integration Tests', () => {
       .set('Authorization', `Bearer ${testUserToken}`)
       .expect(200);
 
-    expect(axios.get).toHaveBeenCalledWith(
-      `${services.PROJECTS_SERVICE}/projects`,
+    expect(axios).toHaveBeenCalledWith(
       expect.objectContaining({
+        method: 'get',
+        url: `${services.PROJECTS_SERVICE}/projects`,
         headers: expect.objectContaining({
           'x-user-id': testUserId,
           'x-user-role': testUserRole,
@@ -222,9 +226,10 @@ describe('API Gateway - Integration Tests', () => {
       .set('Authorization', `Bearer ${testUserToken}`)
       .expect(200);
 
-    expect(axios.get).toHaveBeenCalledWith(
-      `${services.MONITORING_SERVICE}/monitoring`,
+    expect(axios).toHaveBeenCalledWith(
       expect.objectContaining({
+        method: 'get',
+        url: `${services.MONITORING_SERVICE}/monitoring`,
         headers: expect.objectContaining({
           'x-user-id': testUserId,
           'x-user-role': testUserRole,
