@@ -1,27 +1,33 @@
 const projectController = require('../src/controllers/projectController');
 const Project = require('../src/models/Project');
 const Task = require('../src/models/Task');
-const mongoose = require('mongoose');
+// const mongoose = require('mongoose'); // Remove global import
 
 // Mock de los modelos
-jest.mock('../src/models/Project', () => ({
-  find: jest.fn().mockReturnThis(),
-  populate: jest.fn().mockReturnThis(),
-  sort: jest.fn().mockResolvedValue([]),
-  findById: jest.fn().mockResolvedValue(null),
-  findByIdAndUpdate: jest.fn().mockResolvedValue(null),
-  findByIdAndDelete: jest.fn().mockResolvedValue(null),
-  create: jest.fn().mockResolvedValue(null),
-}));
-jest.mock('../src/models/Task', () => ({
-  find: jest.fn().mockReturnThis(),
-  populate: jest.fn().mockReturnThis(),
-  sort: jest.fn().mockResolvedValue([]),
-  findById: jest.fn().mockResolvedValue(null),
-  findByIdAndUpdate: jest.fn().mockResolvedValue(null),
-  findByIdAndDelete: jest.fn().mockResolvedValue(null),
-  create: jest.fn().mockResolvedValue(null),
-}));
+jest.mock('../src/models/Project', () => {
+  const mongoose = require('mongoose'); // Import mongoose inside the mock factory
+  return {
+    find: jest.fn().mockReturnThis(),
+    populate: jest.fn().mockReturnThis(),
+    sort: jest.fn().mockResolvedValue([]),
+    findById: jest.fn().mockResolvedValue(null),
+    findByIdAndUpdate: jest.fn().mockResolvedValue(null),
+    findByIdAndDelete: jest.fn().mockResolvedValue(null),
+    create: jest.fn().mockResolvedValue(null),
+  };
+});
+jest.mock('../src/models/Task', () => {
+  const mongoose = require('mongoose'); // Import mongoose inside the mock factory
+  return {
+    find: jest.fn().mockReturnThis(),
+    populate: jest.fn().mockReturnThis(),
+    sort: jest.fn().mockResolvedValue([]),
+    findById: jest.fn().mockResolvedValue(null),
+    findByIdAndUpdate: jest.fn().mockResolvedValue(null),
+    findByIdAndDelete: jest.fn().mockResolvedValue(null),
+    create: jest.fn().mockResolvedValue(null),
+  };
+});
 
 describe('Projects Service - Unit Tests', () => {
   let req, res;

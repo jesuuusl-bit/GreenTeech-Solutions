@@ -1,21 +1,27 @@
 const monitoringController = require('../src/controllers/monitoringController');
 const ProductionData = require('../src/models/ProductionData');
 const Alert = require('../src/models/Alert');
-const mongoose = require('mongoose');
+// const mongoose = require('mongoose'); // Remove global import
 
 // Mock de los modelos
-jest.mock('../src/models/ProductionData', () => ({
-  find: jest.fn().mockReturnThis(),
-  populate: jest.fn().mockReturnThis(),
-  sort: jest.fn().mockResolvedValue([]),
-  findByIdAndUpdate: jest.fn().mockResolvedValue(null),
-  create: jest.fn().mockResolvedValue(null),
-}));
-jest.mock('../src/models/Alert', () => ({
-  find: jest.fn().mockReturnThis(),
-  sort: jest.fn().mockResolvedValue([]),
-  create: jest.fn().mockResolvedValue(null),
-}));
+jest.mock('../src/models/ProductionData', () => {
+  const mongoose = require('mongoose'); // Import mongoose inside the mock factory
+  return {
+    find: jest.fn().mockReturnThis(),
+    populate: jest.fn().mockReturnThis(),
+    sort: jest.fn().mockResolvedValue([]),
+    findByIdAndUpdate: jest.fn().mockResolvedValue(null),
+    create: jest.fn().mockResolvedValue(null),
+  };
+});
+jest.mock('../src/models/Alert', () => {
+  const mongoose = require('mongoose'); // Import mongoose inside the mock factory
+  return {
+    find: jest.fn().mockReturnThis(),
+    sort: jest.fn().mockResolvedValue([]),
+    create: jest.fn().mockResolvedValue(null),
+  };
+});
 
 describe('Monitoring Service - Unit Tests', () => {
   let req, res;

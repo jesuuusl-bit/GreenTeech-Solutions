@@ -1,19 +1,22 @@
 const documentController = require('../src/controllers/documentController');
 const Document = require('../src/models/Document');
-const mongoose = require('mongoose');
+// const mongoose = require('mongoose'); // Remove global import
 
 // Mock del modelo Document
-jest.mock('../src/models/Document', () => ({
-  find: jest.fn().mockReturnThis(),
-  populate: jest.fn().mockReturnThis(),
-  sort: jest.fn().mockResolvedValue([]),
-  countDocuments: jest.fn().mockResolvedValue(0),
-  // Mock del constructor para new Document()
-  mockImplementation: jest.fn((data) => ({
-    ...data,
-    save: jest.fn().mockResolvedValue({ _id: new mongoose.Types.ObjectId(), ...data }),
-  })),
-}));
+jest.mock('../src/models/Document', () => {
+  const mongoose = require('mongoose'); // Import mongoose inside the mock factory
+  return {
+    find: jest.fn().mockReturnThis(),
+    populate: jest.fn().mockReturnThis(),
+    sort: jest.fn().mockResolvedValue([]),
+    countDocuments: jest.fn().mockResolvedValue(0),
+    // Mock del constructor para new Document()
+    mockImplementation: jest.fn((data) => ({
+      ...data,
+      save: jest.fn().mockResolvedValue({ _id: new mongoose.Types.ObjectId(), ...data }),
+    })),
+  };
+});
 
 describe('Documents Service - Unit Tests', () => {
   let req, res;

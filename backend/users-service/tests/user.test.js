@@ -2,21 +2,24 @@ const userController = require('../src/controllers/userController');
 const User = require('../src/models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const mongoose = require('mongoose');
+// const mongoose = require('mongoose'); // Remove global import
 
 // Mock de los modelos y librerías
-jest.mock('../src/models/User', () => ({
-  findOne: jest.fn().mockResolvedValue(null),
-  create: jest.fn().mockResolvedValue(null),
-  find: jest.fn().mockReturnThis(),
-  populate: jest.fn().mockReturnThis(),
-  sort: jest.fn().mockResolvedValue([]),
-  countDocuments: jest.fn().mockResolvedValue(0),
-  aggregate: jest.fn().mockResolvedValue([]),
-  findById: jest.fn().mockResolvedValue(null),
-  findByIdAndUpdate: jest.fn().mockResolvedValue(null),
-  findByIdAndDelete: jest.fn().mockResolvedValue(null),
-}));
+jest.mock('../src/models/User', () => {
+  const mongoose = require('mongoose'); // Import mongoose inside the mock factory
+  return {
+    findOne: jest.fn().mockResolvedValue(null),
+    create: jest.fn().mockResolvedValue(null),
+    find: jest.fn().mockReturnThis(),
+    populate: jest.fn().mockReturnThis(),
+    sort: jest.fn().mockResolvedValue([]),
+    countDocuments: jest.fn().mockResolvedValue(0),
+    aggregate: jest.fn().mockResolvedValue([]),
+    findById: jest.fn().mockResolvedValue(null),
+    findByIdAndUpdate: jest.fn().mockResolvedValue(null),
+    findByIdAndDelete: jest.fn().mockResolvedValue(null),
+  };
+});
 jest.mock('bcryptjs');
 jest.mock('jsonwebtoken');
 

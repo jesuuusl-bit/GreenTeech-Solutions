@@ -1,18 +1,21 @@
 const predictiveController = require('../src/controllers/predictiveController');
 const Prediction = require('../src/models/Prediction');
 const weatherService = require('../src/services/weatherService');
-const mongoose = require('mongoose');
+// const mongoose = require('mongoose'); // Remove global import
 
 // Mock de los modelos y servicios
-jest.mock('../src/models/Prediction', () => ({
-  find: jest.fn().mockReturnThis(),
-  populate: jest.fn().mockReturnThis(),
-  sort: jest.fn().mockResolvedValue([]),
-  mockImplementation: jest.fn((data) => ({
-    ...data,
-    save: jest.fn().mockResolvedValue({ _id: new mongoose.Types.ObjectId(), ...data }),
-  })),
-}));
+jest.mock('../src/models/Prediction', () => {
+  const mongoose = require('mongoose'); // Import mongoose inside the mock factory
+  return {
+    find: jest.fn().mockReturnThis(),
+    populate: jest.fn().mockReturnThis(),
+    sort: jest.fn().mockResolvedValue([]),
+    mockImplementation: jest.fn((data) => ({
+      ...data,
+      save: jest.fn().mockResolvedValue({ _id: new mongoose.Types.ObjectId(), ...data }),
+    })),
+  };
+});
 jest.mock('../src/services/weatherService');
 
 describe('Predictive Service - Unit Tests', () => {
