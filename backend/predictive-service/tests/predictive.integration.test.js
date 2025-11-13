@@ -97,13 +97,13 @@ describe('Predictive Service - Integration Tests', () => {
       save: jest.fn().mockResolvedValue(mockSavedPrediction),
     }));
 
-    const res = await request(app).post('/predictive').send({ city });
+    const res = await request(app).post('/predictive/predict').send({ city });
 
     expect(res.statusCode).toEqual(200);
     expect(res.body).toHaveProperty('predictedValue');
     expect(res.body.weatherInfo).toHaveProperty('city', city);
     expect(weatherService.getWeatherData).toHaveBeenCalledWith(city);
-    expect(Prediction.mockImplementation).toHaveBeenCalledTimes(1);
+    expect(Prediction).toHaveBeenCalledTimes(1);
     expect(Prediction.mock.results[0].value.save).toHaveBeenCalledTimes(1);
   });
 
@@ -116,7 +116,7 @@ describe('Predictive Service - Integration Tests', () => {
     // Set the resolved value for the limit method of the chained mock
     Prediction._mockLimit.mockResolvedValue(mockHistoricalData.map(data => ({ ...data, _id: data._id.toString() }))); // Convert _id to string
 
-    const res = await request(app).get('/predictive/historical');
+    const res = await request(app).get('/predictive/history');
 
     expect(res.statusCode).toEqual(200);
     expect(res.body.length).toEqual(2);

@@ -76,12 +76,7 @@ exports.getPrediction = async (req, res) => {
 exports.getHistoricalData = async (req, res) => {
   try {
     const historicalData = await Prediction.find().sort({ timestamp: -1 }).limit(10);
-    // Formatear para el frontend si es necesario
-    const formattedData = historicalData.map(data => ({
-      name: new Date(data.timestamp).toLocaleDateString(),
-      value: data.predictedValue,
-    }));
-    res.status(200).json(formattedData);
+    res.status(200).json(historicalData);
   } catch (error) {
     console.error('Error al obtener datos históricos:', error);
     res.status(500).json({ message: 'Error al obtener datos históricos', error: error.message });
