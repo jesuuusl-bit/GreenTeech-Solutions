@@ -1,6 +1,6 @@
 const documentController = require('../src/controllers/documentController');
 const Document = require('../src/models/Document');
-// const mongoose = require('mongoose'); // Remove global import
+const mongoose = require('mongoose'); // Re-add global import
 
 // Mock del modelo Document
 jest.mock('../src/models/Document', () => {

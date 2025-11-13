@@ -1,7 +1,7 @@
 const predictiveController = require('../src/controllers/predictiveController');
 const Prediction = require('../src/models/Prediction');
 const weatherService = require('../src/services/weatherService');
-// const mongoose = require('mongoose'); // Remove global import
+const mongoose = require('mongoose'); // Re-add global import
 
 // Mock de los modelos y servicios
 jest.mock('../src/models/Prediction', () => {

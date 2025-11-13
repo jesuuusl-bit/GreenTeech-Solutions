@@ -1,7 +1,7 @@
 const monitoringController = require('../src/controllers/monitoringController');
 const ProductionData = require('../src/models/ProductionData');
 const Alert = require('../src/models/Alert');
-// const mongoose = require('mongoose'); // Remove global import
+const mongoose = require('mongoose'); // Re-add global import
 
 // Mock de los modelos
 jest.mock('../src/models/ProductionData', () => {

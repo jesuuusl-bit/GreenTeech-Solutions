@@ -2,7 +2,7 @@ const userController = require('../src/controllers/userController');
 const User = require('../src/models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-// const mongoose = require('mongoose'); // Remove global import
+const mongoose = require('mongoose'); // Re-add global import
 
 // Mock de los modelos y librerías
 jest.mock('../src/models/User', () => {

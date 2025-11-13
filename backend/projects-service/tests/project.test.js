@@ -1,7 +1,7 @@
 const projectController = require('../src/controllers/projectController');
 const Project = require('../src/models/Project');
 const Task = require('../src/models/Task');
-// const mongoose = require('mongoose'); // Remove global import
+const mongoose = require('mongoose'); // Re-add global import
 
 // Mock de los modelos
 jest.mock('../src/models/Project', () => {
