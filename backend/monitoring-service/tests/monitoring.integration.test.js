@@ -13,12 +13,16 @@ jest.mock('../../monitoring-service/src/models/ProductionData', () => ({
   create: jest.fn().mockResolvedValue(null),
   aggregate: jest.fn().mockResolvedValue([]), // Added aggregate mock
 }));
-jest.mock('../../monitoring-service/src/models/Alert', () => ({
-  find: jest.fn().mockReturnThis(),
-  sort: jest.fn().mockReturnThis(), // sort should return this to allow chaining limit
-  limit: jest.fn().mockResolvedValue([]), // Added limit mock
-  create: jest.fn().mockResolvedValue(null),
-}));
+jest.mock('../../monitoring-service/src/models/Alert', () => {
+  const mockLimit = jest.fn().mockResolvedValue([]);
+  const mockSort = jest.fn().mockReturnValue({ limit: mockLimit }); // sort returns an object with limit
+  const mockFind = jest.fn().mockReturnValue({ sort: mockSort }); // find returns an object with sort
+
+  return {
+    find: mockFind,
+    create: jest.fn().mockResolvedValue(null),
+  };
+});
 
 // Mock de mongoose.connect para evitar la conexión real a la DB
 jest.mock('mongoose', () => ({
@@ -62,9 +66,12 @@ describe('Monitoring Service - Integration Tests', () => {
       { _id: 'plantA', plantId: 'plantA', production: { current: 100, capacity: 120 }, efficiency: 83.33 },
       { _id: 'plantB', plantId: 'plantB', production: { current: 150, capacity: 200 }, efficiency: 75.00 },
     ]);
-    Alert.find.mockReturnThis();
-    Alert.sort.mockReturnThis();
-    Alert.limit.mockResolvedValue([]);
+    // Reset Alert mocks with explicit chaining
+    Alert.find.mockReturnValue({
+      sort: jest.fn().mockReturnValue({
+        limit: jest.fn().mockResolvedValue([]),
+      }),
+    });
     Alert.create.mockResolvedValue(null);
   });
 
