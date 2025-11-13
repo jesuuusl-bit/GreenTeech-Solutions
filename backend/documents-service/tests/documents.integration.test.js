@@ -149,7 +149,7 @@ describe('Documents Service - Integration Tests', () => {
     expect(res.statusCode).toEqual(201);
     expect(res.body.success).toBe(true);
     expect(res.body.data).toHaveProperty('title', 'Test Document');
-    expect(res.body.data).toHaveProperty('fileName', 'test_upload.txt');
+    expect(res.body.data).toHaveProperty('fileName', 'test_upload.pdf');
     expect(Document.mockImplementation).toHaveBeenCalledTimes(1);
     expect(Document.mock.results[0].value.save).toHaveBeenCalledTimes(1);
 
