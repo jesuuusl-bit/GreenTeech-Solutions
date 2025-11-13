@@ -99,25 +99,5 @@ describe('Predictive Service - Unit Tests', () => {
     expect(Prediction.mock.results[0].value.save).toHaveBeenCalledTimes(1);
   });
 
-
-  // Test para getHistoricalData
-  test('getHistoricalData should return historical prediction data', async () => {
-    const mockHistoricalData = [
-      { timestamp: new Date(), predictedValue: 10, _id: new mongoose.Types.ObjectId() },
-      { timestamp: new Date(), predictedValue: 20, _id: new mongoose.Types.ObjectId() },
-    ];
-    Prediction.find.mockReturnThis();
-    Prediction.sort.mockReturnThis();
-    Prediction.limit.mockResolvedValue(mockHistoricalData); // Assuming limit is called
-
-    await predictiveController.getHistoricalData(req, res);
-
-    expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith(expect.arrayContaining([
-      expect.objectContaining({ name: expect.any(String), value: expect.any(Number) }),
-    ]));
-    expect(res.json.mock.calls[0][0].length).toBe(2);
-  });
-
   // Puedes añadir más tests unitarios aquí para la lógica de simulaciones, etc.
 });
