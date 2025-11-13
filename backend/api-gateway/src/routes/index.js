@@ -31,19 +31,23 @@ const proxyRequest = async (req, res, serviceUrl) => {
       validateStatus: () => true // Aceptar cualquier status code
     };
 
-    // Create a new headers object to avoid modifying the original req.headers
-    const proxyHeaders = {};
+    const headersToForward = {};
     for (const key in req.headers) {
-      if (Object.prototype.hasOwnProperty.call(req.headers, key)) {
-        proxyHeaders[key] = req.headers[key];
+      // Exclude content-length and transfer-encoding from being forwarded
+      if (key.toLowerCase() !== 'content-length' && key.toLowerCase() !== 'transfer-encoding' && Object.prototype.hasOwnProperty.call(req.headers, key)) {
+        headersToForward[key] = req.headers[key];
       }
     }
-    // Remove headers that axios will manage or that cause conflicts
-    delete proxyHeaders['content-length'];
-    delete proxyHeaders['transfer-encoding'];
 
-    // Merge cleaned headers into config.headers
-    config.headers = { ...config.headers, ...proxyHeaders };
+    config.headers = {
+      ...headersToForward, // Use the explicitly filtered headers
+      host: new URL(serviceUrl).host,
+      'x-forwarded-host': req.headers.host,
+      'x-forwarded-proto': req.protocol,
+      'x-forwarded-for': req.ip,
+      // Forward user info from API Gateway to microservice
+      ...(req.user && { 'x-user-id': req.user.id, 'x-user-role': req.user.role })
+    };
 
     if (req.body && Object.keys(req.body).length > 0) {
       config.data = req.body;

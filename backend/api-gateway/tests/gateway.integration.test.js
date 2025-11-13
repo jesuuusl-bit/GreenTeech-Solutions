@@ -1,3 +1,8 @@
+// Define un JWT_SECRET para el entorno de pruebas
+process.env.JWT_SECRET = 'test_jwt_secret'; 
+process.env.USERS_SERVICE_URL = 'http://localhost:5001'; // Mock user service URL
+process.env.DOCUMENTS_SERVICE_URL = 'http://localhost:5005'; // Mock documents service URL
+
 const request = require('supertest');
 const app = require('../src/app'); // Importa tu app Express desde el nuevo app.js
 const services = require('../src/config/services'); // Para acceder a las URLs de los servicios
