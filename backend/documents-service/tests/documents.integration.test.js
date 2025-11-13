@@ -18,7 +18,7 @@ jest.mock('../../documents-service/src/models/Document', () => ({
   // Mock del constructor para new Document()
   mockImplementation: jest.fn((data) => ({
     ...data,
-    save: jest.fn().mockResolvedValue({ _id: new mongoose.Types.ObjectId(), ...data }),
+    save: jest.fn().mockResolvedValue({ _id: new jest.requireActual('mongoose').Types.ObjectId(), ...data }),
   })),
 }));
 
