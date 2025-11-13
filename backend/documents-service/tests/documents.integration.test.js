@@ -65,15 +65,17 @@ describe('Documents Service - Integration Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     // Resetear mocks del modelo Document
-    Document.find.mockReturnThis();
-    Document.populate.mockReturnThis();
-    Document.sort.mockResolvedValue([]);
-    Document.countDocuments.mockResolvedValue(0);
-    Document.findById.mockResolvedValue(null);
-    Document.findByIdAndUpdate.mockResolvedValue(null);
-    Document.findByIdAndDelete.mockResolvedValue(null);
-    Document.create.mockResolvedValue(null);
-    Document.mockImplementation.mockClear();
+    // Clear the mock constructor itself
+    Document.mockClear();
+    // Clear mocks on static methods
+    Document.find.mockClear().mockReturnThis();
+    Document.populate.mockClear().mockReturnThis();
+    Document.sort.mockClear().mockResolvedValue([]);
+    Document.countDocuments.mockClear().mockResolvedValue(0);
+    Document.findById.mockClear().mockResolvedValue(null);
+    Document.findByIdAndUpdate.mockClear().mockResolvedValue(null);
+    Document.findByIdAndDelete.mockClear().mockResolvedValue(null);
+    Document.create.mockClear().mockResolvedValue(null);
   });
 
   // Test 1: GET /documents - Debería devolver una lista de documentos
