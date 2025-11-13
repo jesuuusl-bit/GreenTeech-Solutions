@@ -11,10 +11,12 @@ jest.mock('../../monitoring-service/src/models/ProductionData', () => ({
   sort: jest.fn().mockResolvedValue([]),
   findByIdAndUpdate: jest.fn().mockResolvedValue(null),
   create: jest.fn().mockResolvedValue(null),
+  aggregate: jest.fn().mockResolvedValue([]), // Added aggregate mock
 }));
 jest.mock('../../monitoring-service/src/models/Alert', () => ({
   find: jest.fn().mockReturnThis(),
-  sort: jest.fn().mockResolvedValue([]),
+  sort: jest.fn().mockReturnThis(), // sort should return this to allow chaining limit
+  limit: jest.fn().mockResolvedValue([]), // Added limit mock
   create: jest.fn().mockResolvedValue(null),
 }));
 
@@ -87,9 +89,11 @@ describe('Monitoring Service - Integration Tests', () => {
 
     const res = await request(app).post('/monitoring/production').send(newData);
 
+    const expectedSavedData = { ...mockSavedData, _id: mockSavedData._id.toString() }; // Convert _id to string
+
     expect(res.statusCode).toEqual(201);
     expect(res.body.success).toBe(true);
-    expect(res.body.data).toEqual(mockSavedData);
+    expect(res.body.data).toEqual(expectedSavedData); // Compare with converted data
     expect(ProductionData.create).toHaveBeenCalledWith(newData);
     expect(Alert.create).toHaveBeenCalledWith(expect.objectContaining({
       type: 'low-production',
@@ -107,9 +111,11 @@ describe('Monitoring Service - Integration Tests', () => {
 
     const res = await request(app).patch(`/monitoring/production/${dataId}`).send(updatedData);
 
+    const expectedUpdatedData = { ...mockUpdatedData, _id: mockUpdatedData._id.toString() }; // Convert _id to string
+
     expect(res.statusCode).toEqual(200);
     expect(res.body.success).toBe(true);
-    expect(res.body.data).toEqual(mockUpdatedData);
+    expect(res.body.data).toEqual(expectedUpdatedData); // Compare with converted data
     expect(ProductionData.findByIdAndUpdate).toHaveBeenCalledWith(dataId.toString(), updatedData, { new: true, runValidators: true });
   });
 
