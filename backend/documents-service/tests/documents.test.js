@@ -4,23 +4,18 @@ const mongoose = require('mongoose'); // Re-add global import
 
 // Mock del modelo Document
 jest.mock('../src/models/Document', () => {
-  const mongoose = require('mongoose');
-  const MockDocument = jest.fn(); // This will be our mock constructor
-  
-  // Mock static methods
-  MockDocument.find = jest.fn().mockReturnThis();
-  MockDocument.populate = jest.fn().mockReturnThis();
-  MockDocument.sort = jest.fn().mockResolvedValue([]);
-  MockDocument.countDocuments = jest.fn().mockResolvedValue(0);
-
-  // Default implementation for the constructor
-  MockDocument.mockImplementation((data) => ({
-    ...data,
-    _id: new mongoose.Types.ObjectId(),
-    save: jest.fn().mockResolvedValue(data), // Default save behavior
-  }));
-
-  return MockDocument;
+  const mongoose = require('mongoose'); // Import mongoose inside the mock factory
+  return {
+    find: jest.fn().mockReturnThis(),
+    populate: jest.fn().mockReturnThis(),
+    sort: jest.fn().mockResolvedValue([]),
+    countDocuments: jest.fn().mockResolvedValue(0),
+    // Mock del constructor para new Document()
+    mockImplementation: jest.fn((data) => ({
+      ...data,
+      save: jest.fn().mockResolvedValue({ _id: new mongoose.Types.ObjectId(), ...data }),
+    })),
+  };
 });
 
 describe('Documents Service - Unit Tests', () => {
@@ -77,11 +72,8 @@ describe('Documents Service - Unit Tests', () => {
   test('createDocument should create a document', async () => {
     req.body = { title: 'New Doc', type: 'report', fileName: 'new.pdf', fileUrl: '/new.pdf', uploadedBy: new mongoose.Types.ObjectId() };
     const mockSavedDoc = { _id: new mongoose.Types.ObjectId(), ...req.body };
-    
-    // Mock the constructor for this specific test
-    Document.mockImplementationOnce((data) => ({
-      ...data,
-      _id: mockSavedDoc._id, // Ensure the mock ID is used
+    Document.mockImplementationOnce(() => ({
+      ...req.body,
       save: jest.fn().mockResolvedValue(mockSavedDoc),
     }));
 
@@ -92,8 +84,8 @@ describe('Documents Service - Unit Tests', () => {
       success: true,
       data: expect.objectContaining({ title: 'New Doc' }),
     }));
-    expect(res.json.mock.calls[0][0].data.title).toBe('New Doc');
-    expect(res.json.mock.calls[0][0].data).toHaveProperty('_id');
+    expect(res.json.mock.calls[0][0].data.title).toBe('New Doc'); // toBe
+    expect(res.json.mock.calls[0][0].data).toHaveProperty('_id'); // toHaveProperty
   });
 
   // Test para uploadDocument (requiere req.file)
@@ -131,10 +123,8 @@ describe('Documents Service - Unit Tests', () => {
       projectId: req.body.projectId,
     };
 
-    // Mock the constructor for this specific test
-    Document.mockImplementationOnce((data) => ({
-      ...data,
-      _id: mockSavedDoc._id, // Ensure the mock ID is used
+    Document.mockImplementationOnce(() => ({
+      ...mockSavedDoc,
       save: jest.fn().mockResolvedValue(mockSavedDoc),
     }));
 
