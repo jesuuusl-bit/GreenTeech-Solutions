@@ -6,19 +6,30 @@ const mongoose = require('mongoose'); // Re-add global import
 
 // Mock de los modelos y librerías
 jest.mock('../src/models/User', () => {
-  const mongoose = require('mongoose'); // Import mongoose inside the mock factory
-  return {
-    findOne: jest.fn().mockResolvedValue(null),
-    create: jest.fn().mockResolvedValue(null),
-    find: jest.fn().mockReturnThis(),
-    populate: jest.fn().mockReturnThis(),
-    sort: jest.fn().mockResolvedValue([]),
-    countDocuments: jest.fn().mockResolvedValue(0),
-    aggregate: jest.fn().mockResolvedValue([]),
-    findById: jest.fn().mockResolvedValue(null),
-    findByIdAndUpdate: jest.fn().mockResolvedValue(null),
-    findByIdAndDelete: jest.fn().mockResolvedValue(null),
-  };
+  const mongoose = require('mongoose');
+  const MockUser = jest.fn(); // This will be our mock constructor
+
+  // Mock static methods
+  MockUser.findOne = jest.fn().mockResolvedValue(null);
+  MockUser.create = jest.fn().mockResolvedValue(null);
+  MockUser.find = jest.fn().mockReturnThis();
+  MockUser.populate = jest.fn().mockReturnThis();
+  MockUser.sort = jest.fn().mockResolvedValue([]);
+  MockUser.countDocuments = jest.fn().mockResolvedValue(0);
+  MockUser.aggregate = jest.fn().mockResolvedValue([]);
+  MockUser.findById = jest.fn().mockResolvedValue(null);
+  MockUser.findByIdAndUpdate = jest.fn().mockResolvedValue(null);
+  MockUser.findByIdAndDelete = jest.fn().mockResolvedValue(null);
+
+  // Default implementation for the constructor (if new User() is ever called)
+  MockUser.mockImplementation((data) => ({
+    ...data,
+    _id: new mongoose.Types.ObjectId(),
+    save: jest.fn().mockResolvedValue(data), // Default save behavior
+    comparePassword: jest.fn().mockResolvedValue(true), // Mock comparePassword
+  }));
+
+  return MockUser;
 });
 jest.mock('bcryptjs');
 jest.mock('jsonwebtoken');
@@ -37,12 +48,13 @@ describe('Users Service - Unit Tests', () => {
   });
 
   // Test para registerUser
-  test('registerUser should create a new user', async () => {
+  test('register should create a new user', async () => {
     req.body = { name: 'Test User', email: 'test@example.com', password: 'password123', role: 'user' };
     bcrypt.hash.mockResolvedValue('hashedPassword');
+    User.findOne.mockResolvedValue(null); // Ensure user does not exist
     User.create.mockResolvedValue({ _id: new mongoose.Types.ObjectId(), ...req.body, password: 'hashedPassword' });
 
-    await userController.registerUser(req, res);
+    await userController.register(req, res); // Corrected function name
 
     expect(bcrypt.hash).toHaveBeenCalledWith('password123', 10);
     expect(User.create).toHaveBeenCalledWith(expect.objectContaining({
@@ -58,18 +70,18 @@ describe('Users Service - Unit Tests', () => {
   });
 
   // Test para loginUser
-  test('loginUser should return a token for valid credentials', async () => {
+  test('login should return a token for valid credentials', async () => {
     req.body = { email: 'login@example.com', password: 'password123' };
-    const mockUser = { _id: new mongoose.Types.ObjectId(), email: 'login@example.com', password: 'hashedPassword', role: 'user' };
+    const mockUser = { _id: new mongoose.Types.ObjectId(), email: 'login@example.com', password: 'hashedPassword', role: 'user', isActive: true, comparePassword: jest.fn().mockResolvedValue(true), save: jest.fn() };
     User.findOne.mockResolvedValue(mockUser);
-    bcrypt.compare.mockResolvedValue(true);
+    // bcrypt.compare.mockResolvedValue(true); // Mocked in MockUser.comparePassword
     jwt.sign.mockReturnValue('mockToken');
     process.env.JWT_SECRET = 'test_secret'; // Mock JWT_SECRET
 
-    await userController.loginUser(req, res);
+    await userController.login(req, res); // Corrected function name
 
     expect(User.findOne).toHaveBeenCalledWith({ email: 'login@example.com' });
-    expect(bcrypt.compare).toHaveBeenCalledWith('password123', 'hashedPassword');
+    expect(mockUser.comparePassword).toHaveBeenCalledWith('password123'); // Use mockUser's comparePassword
     expect(jwt.sign).toHaveBeenCalledWith(expect.objectContaining({ id: mockUser._id.toString() }), 'test_secret', { expiresIn: '1h' });
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
@@ -81,10 +93,9 @@ describe('Users Service - Unit Tests', () => {
 
   // Test para getAllUsers
   test('getAllUsers should return all users', async () => {
-    const mockUsers = [{ name: 'User A', _id: new mongoose.Types.ObjectId() }];
+    const mockUsers = [{ name: 'User A', _id: new mongoose.Types.ObjectId(), isActive: true }];
     User.find.mockReturnThis();
-    User.populate.mockReturnThis();
-    User.sort.mockResolvedValue(mockUsers);
+    User.sort.mockResolvedValue(mockUsers); // populate is not called in controller
 
     await userController.getAllUsers(req, res);
 
@@ -103,6 +114,7 @@ describe('Users Service - Unit Tests', () => {
     User.countDocuments.mockResolvedValueOnce(10); // Total
     User.countDocuments.mockResolvedValueOnce(8);  // Active
     User.aggregate.mockResolvedValueOnce([{ _id: 'admin', count: 2 }]); // By role
+    User.aggregate.mockResolvedValueOnce([{ _id: 'IT', count: 3 }]); // By department
     User.countDocuments.mockResolvedValueOnce(1);  // Recent
 
     await userController.getUserStats(req, res);
@@ -110,24 +122,27 @@ describe('Users Service - Unit Tests', () => {
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
       success: true,
-      total: 10,
-      active: 8,
-      byRole: expect.objectContaining({ admin: 2 }),
-      recentUsers: 1,
+      data: expect.objectContaining({
+        total: 10,
+        active: 8,
+        byRole: expect.objectContaining({ admin: 2 }),
+        byDepartment: expect.objectContaining({ IT: 3 }),
+        recentUsers: 1,
+      }),
     }));
-    expect(res.json.mock.calls[0][0].byRole.admin).toBe(2); // toBe
-    expect(res.json.mock.calls[0][0]).toHaveProperty('total'); // toHaveProperty
+    expect(res.json.mock.calls[0][0].data.byRole.admin).toBe(2); // toBe
+    expect(res.json.mock.calls[0][0].data).toHaveProperty('total'); // toHaveProperty
   });
 
   // Test para loginUser con credenciales inválidas
-  test('loginUser should return 401 for invalid password', async () => {
+  test('login should return 401 for invalid password', async () => {
     req.body = { email: 'login@example.com', password: 'wrongPassword' };
-    const mockUser = { _id: new mongoose.Types.ObjectId(), email: 'login@example.com', password: 'hashedPassword', role: 'user' };
+    const mockUser = { _id: new mongoose.Types.ObjectId(), email: 'login@example.com', password: 'hashedPassword', role: 'user', isActive: true, comparePassword: jest.fn().mockResolvedValue(false) };
     User.findOne.mockResolvedValue(mockUser);
-    bcrypt.compare.mockResolvedValue(false); // Contraseña incorrecta
+    // bcrypt.compare.mockResolvedValue(false); // Mocked in MockUser.comparePassword
     process.env.JWT_SECRET = 'test_secret'; // Mock JWT_SECRET
 
-    await userController.loginUser(req, res);
+    await userController.login(req, res); // Corrected function name
 
     expect(res.status).toHaveBeenCalledWith(401);
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
