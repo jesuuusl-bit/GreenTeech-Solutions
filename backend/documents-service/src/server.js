@@ -68,7 +68,12 @@ app.use((req, res) => {
 
 const PORT = process.env.PORT || 5005;
 
-app.listen(PORT, () => {
-  console.log(`📄 Documents Service funcionando en puerto ${PORT}`);
-  console.log(`📊 Health check: http://localhost:${PORT}/health`);
-});
+// Iniciar el servidor solo si el archivo se ejecuta directamente
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`📄 Documents Service funcionando en puerto ${PORT}`);
+    console.log(`📊 Health check: http://localhost:${PORT}/health`);
+  });
+}
+
+module.exports = app;
