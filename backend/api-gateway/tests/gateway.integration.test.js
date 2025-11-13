@@ -85,7 +85,7 @@ describe('API Gateway - Integration Tests', () => {
 
   // Test de integración 1: Health check del users-service (debería ser proxyado)
   test('GET /api/users/health should proxy to users-service health endpoint', async () => {
-    axios.get.mockResolvedValue({ status: 200, data: { status: 'healthy', service: 'users-service' } });
+    axios.get.mockResolvedValue({ status: 200, data: { status: 'healthy', service: 'users-service' }, headers: {} });
 
     const response = await request(app)
       .get('/api/users/health')
@@ -105,7 +105,7 @@ describe('API Gateway - Integration Tests', () => {
   // Test de integración 2: Ruta de login (debería ser proxyada)
   test('POST /api/users/login should proxy to users-service login endpoint', async () => {
     const credentials = { email: 'test@example.com', password: 'password123' };
-    axios.post.mockResolvedValue({ status: 200, data: { success: true, token: 'mockToken' } });
+    axios.post.mockResolvedValue({ status: 200, data: { success: true, token: 'mockToken' }, headers: {} });
 
     const response = await request(app)
       .post('/api/users/login')
@@ -146,7 +146,7 @@ describe('API Gateway - Integration Tests', () => {
 
   // Test de integración 4: Acceso a ruta protegida de users-service
   test('GET /api/users should proxy to users-service and require authentication', async () => {
-    axios.get.mockResolvedValue({ status: 200, data: { success: true, data: [{ name: 'Test User' }] } });
+    axios.get.mockResolvedValue({ status: 200, data: { success: true, data: [{ name: 'Test User' }] }, headers: {} });
 
     const response = await request(app)
       .get('/api/users')
@@ -167,7 +167,7 @@ describe('API Gateway - Integration Tests', () => {
 
   // Test de integración 5: Acceso a ruta protegida de projects-service
   test('GET /api/projects should proxy to projects-service and require authentication', async () => {
-    axios.get.mockResolvedValue({ status: 200, data: { success: true, data: [{ name: 'Project Alpha' }] } });
+    axios.get.mockResolvedValue({ status: 200, data: { success: true, data: [{ name: 'Project Alpha' }] }, headers: {} });
 
     const response = await request(app)
       .get('/api/projects')
@@ -188,7 +188,7 @@ describe('API Gateway - Integration Tests', () => {
 
   // Test de integración 6: Acceso a ruta protegida de monitoring-service
   test('GET /api/monitoring should proxy to monitoring-service and require authentication', async () => {
-    axios.get.mockResolvedValue({ status: 200, data: { success: true, data: [{ plantId: 'plant1' }] } });
+    axios.get.mockResolvedValue({ status: 200, data: { success: true, data: [{ plantId: 'plant1' }] }, headers: {} });
 
     const response = await request(app)
       .get('/api/monitoring')
