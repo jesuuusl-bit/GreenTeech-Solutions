@@ -43,14 +43,19 @@ exports.createDocument = async (req, res) => {
 
 // Endpoint de prueba para activar MongoDB
 exports.testMongoDB = async (req, res) => {
-  console.log('--- Entering testMongoDB controller ---'); // Added log
   try {
-    const documentsCount = await Document.countDocuments();
-    console.log('Documents count:', documentsCount); // Added log
-    res.status(200).json({ success: true, documentsCount });
+    const count = await Document.countDocuments();
+    res.json({
+      success: true,
+      message: 'Conexión a MongoDB activa',
+      documentsCount: count
+    });
   } catch (error) {
-    console.error('Error testing MongoDB connection:', error);
-    res.status(500).json({ success: false, message: 'Error testing MongoDB connection', error: error.message });
+    res.status(500).json({
+      success: false,
+      message: 'Error de conexión a MongoDB',
+      error: error.message
+    });
   }
 };
 
