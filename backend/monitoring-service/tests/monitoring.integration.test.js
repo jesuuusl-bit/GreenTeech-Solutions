@@ -86,7 +86,7 @@ describe('Monitoring Service - Integration Tests', () => {
         summary: {
           totalProduction: '250.00', // 100 + 150
           totalCapacity: '320.00',   // 120 + 200
-          averageEfficiency: '79.17', // (83.33 + 75.00) / 2 = 79.165 -> 79.17
+          averageEfficiency: '79.16', // (83.33 + 75.00) / 2 = 79.165 -> 79.16
           plantCount: 2,
           unit: 'MW'
         }

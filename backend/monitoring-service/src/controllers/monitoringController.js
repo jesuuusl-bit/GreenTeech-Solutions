@@ -163,6 +163,7 @@ exports.getAlerts = async (req, res) => {
       data: alerts
     });
   } catch (error) {
+    console.error('Error in getAlerts:', error); // Add console.error
     res.status(500).json({
       success: false,
       message: 'Error al obtener alertas',
