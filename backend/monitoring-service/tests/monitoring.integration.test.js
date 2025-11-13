@@ -70,7 +70,7 @@ describe('Monitoring Service - Integration Tests', () => {
     ProductionData.populate.mockReturnThis();
     ProductionData.sort.mockResolvedValue(mockData);
 
-    const res = await request(app).get('/monitoring');
+    const res = await request(app).get('/monitoring/production/current');
 
     expect(res.statusCode).toEqual(200);
     expect(res.body.success).toBe(true);
@@ -85,7 +85,7 @@ describe('Monitoring Service - Integration Tests', () => {
     ProductionData.create.mockResolvedValue(mockSavedData);
     Alert.create.mockResolvedValue({ _id: new mongoose.Types.ObjectId(), type: 'low-production', severity: 'medium' });
 
-    const res = await request(app).post('/monitoring').send(newData);
+    const res = await request(app).post('/monitoring/production').send(newData);
 
     expect(res.statusCode).toEqual(201);
     expect(res.body.success).toBe(true);
@@ -105,7 +105,7 @@ describe('Monitoring Service - Integration Tests', () => {
     const mockUpdatedData = { _id: dataId, plantId: 'plantA', efficiency: 95, value: 1000 };
     ProductionData.findByIdAndUpdate.mockResolvedValue(mockUpdatedData);
 
-    const res = await request(app).put(`/monitoring/${dataId}`).send(updatedData);
+    const res = await request(app).patch(`/monitoring/production/${dataId}`).send(updatedData);
 
     expect(res.statusCode).toEqual(200);
     expect(res.body.success).toBe(true);
@@ -122,7 +122,7 @@ describe('Monitoring Service - Integration Tests', () => {
     Alert.find.mockReturnThis();
     Alert.sort.mockResolvedValue(mockAlerts);
 
-    const res = await request(app).get('/alerts');
+    const res = await request(app).get('/monitoring/alerts');
 
     expect(res.statusCode).toEqual(200);
     expect(res.body.success).toBe(true);
