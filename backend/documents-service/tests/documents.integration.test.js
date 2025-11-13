@@ -150,7 +150,7 @@ describe('Documents Service - Integration Tests', () => {
     expect(res.body.success).toBe(true);
     expect(res.body.data).toHaveProperty('title', 'Test Document');
     expect(res.body.data).toHaveProperty('fileName', 'test_upload.pdf');
-    expect(Document.mockImplementation).toHaveBeenCalledTimes(1);
+    expect(Document).toHaveBeenCalledTimes(1); // Assert that the constructor was called
     expect(Document.mock.results[0].value.save).toHaveBeenCalledTimes(1);
 
     fs.unlinkSync(filePath); // Limpiar archivo de prueba
