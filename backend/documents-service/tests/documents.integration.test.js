@@ -110,8 +110,10 @@ describe('Documents Service - Integration Tests', () => {
 
   // Test 2: POST /documents/upload - Debería subir un documento y guardar sus metadatos
   test('POST /documents/upload should upload a document and save its metadata', async () => {
-    const filePath = path.join(__dirname, 'test_upload.txt');
-    fs.writeFileSync(filePath, 'This is a test file for upload.');
+    const filePath = path.join(__dirname, 'test_upload.pdf'); // Change to PDF extension
+    // Create a dummy PDF file content (minimal valid PDF structure)
+    const pdfContent = '%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Count 0>>endobj\nxref\n0 3\n0000000000 65535 f\n0000000009 00000 n\n0000000074 00000 n\ntrailer<</Size 3/Root 1 0 R>>startxref\n123\n%%EOF';
+    fs.writeFileSync(filePath, pdfContent);
 
     const mockUserId = new mongoose.Types.ObjectId();
     const mockProjectId = new mongoose.Types.ObjectId();
