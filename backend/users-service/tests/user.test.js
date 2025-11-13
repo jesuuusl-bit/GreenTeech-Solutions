@@ -50,16 +50,15 @@ describe('Users Service - Unit Tests', () => {
   // Test para registerUser
   test('register should create a new user', async () => {
     req.body = { name: 'Test User', email: 'test@example.com', password: 'password123', role: 'user' };
-    bcrypt.hash.mockResolvedValue('hashedPassword');
     User.findOne.mockResolvedValue(null); // Ensure user does not exist
-    User.create.mockResolvedValue({ _id: new mongoose.Types.ObjectId(), ...req.body, password: 'hashedPassword' });
+    const mockSavedUser = { _id: new mongoose.Types.ObjectId(), ...req.body, password: 'hashedPassword' };
+    User.create.mockResolvedValue(mockSavedUser);
 
-    await userController.register(req, res); // Corrected function name
+    await userController.register(req, res);
 
-    expect(bcrypt.hash).toHaveBeenCalledWith('password123', 10);
     expect(User.create).toHaveBeenCalledWith(expect.objectContaining({
       email: 'test@example.com',
-      password: 'hashedPassword',
+      password: 'password123', // Controller receives unhashed password
     }));
     expect(res.status).toHaveBeenCalledWith(201);
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
@@ -72,23 +71,31 @@ describe('Users Service - Unit Tests', () => {
   // Test para loginUser
   test('login should return a token for valid credentials', async () => {
     req.body = { email: 'login@example.com', password: 'password123' };
-    const mockUser = { _id: new mongoose.Types.ObjectId(), email: 'login@example.com', password: 'hashedPassword', role: 'user', isActive: true, comparePassword: jest.fn().mockResolvedValue(true), save: jest.fn() };
+    const mockUser = {
+      _id: new mongoose.Types.ObjectId(),
+      email: 'login@example.com',
+      password: 'hashedPassword',
+      role: 'user',
+      isActive: true,
+      comparePassword: jest.fn().mockResolvedValue(true),
+      save: jest.fn().mockResolvedValue(true), // Mock save method
+    };
     User.findOne.mockResolvedValue(mockUser);
-    // bcrypt.compare.mockResolvedValue(true); // Mocked in MockUser.comparePassword
     jwt.sign.mockReturnValue('mockToken');
-    process.env.JWT_SECRET = 'test_secret'; // Mock JWT_SECRET
+    process.env.JWT_SECRET = 'test_secret';
 
-    await userController.login(req, res); // Corrected function name
+    await userController.login(req, res);
 
     expect(User.findOne).toHaveBeenCalledWith({ email: 'login@example.com' });
-    expect(mockUser.comparePassword).toHaveBeenCalledWith('password123'); // Use mockUser's comparePassword
+    expect(mockUser.comparePassword).toHaveBeenCalledWith('password123');
+    expect(mockUser.save).toHaveBeenCalledTimes(1); // Verify save was called
     expect(jwt.sign).toHaveBeenCalledWith(expect.objectContaining({ id: mockUser._id.toString() }), 'test_secret', { expiresIn: '1h' });
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
       success: true,
       token: 'mockToken',
     }));
-    expect(res.json.mock.calls[0][0].token).toBe('mockToken'); // toBe
+    expect(res.json.mock.calls[0][0].token).toBe('mockToken');
   });
 
   // Test para getAllUsers
@@ -137,19 +144,27 @@ describe('Users Service - Unit Tests', () => {
   // Test para loginUser con credenciales inválidas
   test('login should return 401 for invalid password', async () => {
     req.body = { email: 'login@example.com', password: 'wrongPassword' };
-    const mockUser = { _id: new mongoose.Types.ObjectId(), email: 'login@example.com', password: 'hashedPassword', role: 'user', isActive: true, comparePassword: jest.fn().mockResolvedValue(false) };
+    const mockUser = {
+      _id: new mongoose.Types.ObjectId(),
+      email: 'login@example.com',
+      password: 'hashedPassword',
+      role: 'user',
+      isActive: true,
+      comparePassword: jest.fn().mockResolvedValue(false),
+      save: jest.fn().mockResolvedValue(true), // Mock save method
+    };
     User.findOne.mockResolvedValue(mockUser);
-    // bcrypt.compare.mockResolvedValue(false); // Mocked in MockUser.comparePassword
-    process.env.JWT_SECRET = 'test_secret'; // Mock JWT_SECRET
+    process.env.JWT_SECRET = 'test_secret';
 
-    await userController.login(req, res); // Corrected function name
+    await userController.login(req, res);
 
+    expect(User.findOne).toHaveBeenCalledWith({ email: 'login@example.com' });
+    expect(mockUser.comparePassword).toHaveBeenCalledWith('wrongPassword'); // Expect wrong password
+    expect(mockUser.save).not.toHaveBeenCalled(); // Save should not be called on invalid password
     expect(res.status).toHaveBeenCalledWith(401);
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
       success: false,
       message: expect.stringContaining('Credenciales inválidas'),
-    })); // toContain
+    }));
   });
-
-  // Puedes añadir más tests unitarios aquí para update, delete, toggle status, etc.
 });

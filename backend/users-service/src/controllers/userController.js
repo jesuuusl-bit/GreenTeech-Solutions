@@ -139,6 +139,7 @@ exports.getProfile = async (req, res) => {
 };
 
 exports.getAllUsers = async (req, res) => {
+  console.log('--- Entering getAllUsers controller ---');
   try {
     const { role, department, isActive } = req.query;
     
@@ -146,8 +147,10 @@ exports.getAllUsers = async (req, res) => {
     if (role) filter.role = role;
     if (department) filter.department = department;
     if (isActive !== undefined) filter.isActive = isActive === 'true';
+    console.log('Filter:', filter);
 
     const users = await User.find(filter).sort('-createdAt');
+    console.log('Fetched users:', users);
     
     res.status(200).json({
       success: true,
@@ -155,6 +158,7 @@ exports.getAllUsers = async (req, res) => {
       data: users
     });
   } catch (error) {
+    console.error('Error fetching users:', error);
     res.status(500).json({
       success: false,
       message: 'Error al obtener usuarios',
