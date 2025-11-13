@@ -6,21 +6,29 @@ const path = require('path');
 const fs = require('fs');
 
 // Mock del modelo Document
-jest.mock('../../documents-service/src/models/Document', () => ({
-  find: jest.fn().mockReturnThis(),
-  populate: jest.fn().mockReturnThis(),
-  sort: jest.fn().mockResolvedValue([]),
-  countDocuments: jest.fn().mockResolvedValue(0),
-  findById: jest.fn().mockResolvedValue(null),
-  findByIdAndUpdate: jest.fn().mockResolvedValue(null),
-  findByIdAndDelete: jest.fn().mockResolvedValue(null),
-  create: jest.fn().mockResolvedValue(null),
-  // Mock del constructor para new Document()
-  mockImplementation: jest.fn((data) => ({
+jest.mock('../../documents-service/src/models/Document', () => {
+  const mongoose = jest.requireActual('mongoose'); // Get actual mongoose for ObjectId
+  const MockDocument = jest.fn(); // This will be our mock constructor
+
+  // Mock static methods
+  MockDocument.find = jest.fn().mockReturnThis();
+  MockDocument.populate = jest.fn().mockReturnThis();
+  MockDocument.sort = jest.fn().mockResolvedValue([]);
+  MockDocument.countDocuments = jest.fn().mockResolvedValue(0);
+  MockDocument.findById = jest.fn().mockResolvedValue(null);
+  MockDocument.findByIdAndUpdate = jest.fn().mockResolvedValue(null);
+  MockDocument.findByIdAndDelete = jest.fn().mockResolvedValue(null);
+  MockDocument.create = jest.fn().mockResolvedValue(null);
+
+  // Default implementation for the constructor (if new Document() is ever called)
+  MockDocument.mockImplementation((data) => ({
     ...data,
-    save: jest.fn().mockResolvedValue({ _id: new jest.requireActual('mongoose').Types.ObjectId(), ...data }),
-  })),
-}));
+    _id: new mongoose.Types.ObjectId(),
+    save: jest.fn().mockResolvedValue({ _id: new mongoose.Types.ObjectId(), ...data }),
+  }));
+
+  return MockDocument;
+});
 
 // Mock de mongoose.connect para evitar la conexión real a la DB
 jest.mock('mongoose', () => ({
@@ -80,9 +88,19 @@ describe('Documents Service - Integration Tests', () => {
 
     const res = await request(app).get('/documents');
 
+    // Convert ObjectIds in mockDocuments to strings for comparison
+    const expectedDocuments = mockDocuments.map(doc => ({
+      ...doc,
+      _id: doc._id.toString(),
+      uploadedBy: {
+        ...doc.uploadedBy,
+        _id: doc.uploadedBy._id.toString(),
+      },
+    }));
+
     expect(res.statusCode).toEqual(200);
     expect(res.body.success).toBe(true);
-    expect(res.body.data).toEqual(mockDocuments);
+    expect(res.body.data).toEqual(expectedDocuments); // Compare with converted documents
     expect(Document.find).toHaveBeenCalledTimes(1);
     expect(Document.populate).toHaveBeenCalledWith('uploadedBy', 'name email');
     expect(Document.sort).toHaveBeenCalledWith({ createdAt: -1 });
