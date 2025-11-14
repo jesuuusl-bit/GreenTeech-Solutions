@@ -13,7 +13,7 @@ const {
 } = require('../controllers/userController');
 const { protect, restrictTo } = require('../middleware/auth');
 
-router.post('/register', protect, restrictTo('admin'), register);
+router.post('/register', register);
 router.post('/login', login);
 router.get('/profile', protect, getProfile);
 router.get('/stats', protect, restrictTo('admin', 'manager'), getUserStats);

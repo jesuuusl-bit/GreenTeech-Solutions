@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 
 // Generar JWT (ahora incluye el rol)
 const generateToken = (user) => {
-  return jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
+  return jwt.sign({ id: user._id.toString(), role: user.role }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRE || '7d'
   });
 };

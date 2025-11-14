@@ -70,6 +70,10 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5001;
 
-app.listen(PORT, () => {
-  console.log(`🚀 Users Service corriendo en puerto ${PORT}`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`🚀 Users Service corriendo en puerto ${PORT}`);
+  });
+}
+
+module.exports = app;
