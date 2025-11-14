@@ -147,7 +147,7 @@ const documentsProxy = createProxyMiddleware({
   target: services.DOCUMENTS_SERVICE,
   changeOrigin: true,
   pathRewrite: {
-    '^/': '/documents/', // reescribe la raíz a /documents/
+    '^/api/documents': '/documents', // reescribe /api/documents a /documents
   },
   onProxyReq: (proxyReq, req, res) => {
     // Añadir headers de usuario si están disponibles
