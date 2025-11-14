@@ -41,6 +41,7 @@ exports.getCurrentProduction = async (req, res) => {
       }
     });
   } catch (error) {
+    console.error('Error in getCurrentProduction:', error);
     res.status(500).json({
       success: false,
       message: 'Error al obtener datos de producción',
