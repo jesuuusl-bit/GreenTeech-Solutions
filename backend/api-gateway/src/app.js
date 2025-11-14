@@ -10,6 +10,12 @@ const errorHandler = require('./middleware/errorHandler');
 
 require('dotenv').config();
 
+const Sentry = require('@sentry/node');
+Sentry.init({
+  dsn: process.env.SENTRY_DSN,
+  tracesSampleRate: 1.0,
+});
+
 const app = express();
 
 // ⚠️ IMPORTANTE: Configurar trust proxy para Render
@@ -60,6 +66,9 @@ app.use(morgan('dev'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Sentry request handler must be the first middleware on the app
+app.use(Sentry.Handlers.requestHandler());
+
 // Rate limiting global
 app.use('/api/', limiter);
 
@@ -85,6 +94,7 @@ app.all('*', (req, res) => {
 });
 
 // Manejo global de errores
+app.use(Sentry.Handlers.errorHandler());
 app.use(errorHandler);
 
 module.exports = app;
