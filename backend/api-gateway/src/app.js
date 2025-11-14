@@ -21,6 +21,7 @@ if (process.env.SENTRY_DSN && process.env.SENTRY_DSN.length > 0) { // Also check
     tracesSampleRate: 1.0,
   });
   console.log('DEBUG: Sentry.init() called.');
+  console.log('DEBUG: Full Sentry object after init:', Sentry); // Add this log
 } else {
   console.warn('SENTRY_DSN no está configurado o está vacío. Sentry no se inicializará.');
 }
