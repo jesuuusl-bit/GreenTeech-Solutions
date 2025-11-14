@@ -11,6 +11,7 @@ const errorHandler = require('./middleware/errorHandler');
 require('dotenv').config();
 
 const Sentry = require('@sentry/node');
+const { Handlers } = require('@sentry/node'); // Explicitly import Handlers
 
 console.log('DEBUG: process.env.SENTRY_DSN:', process.env.SENTRY_DSN);
 
@@ -25,6 +26,7 @@ if (process.env.SENTRY_DSN && process.env.SENTRY_DSN.length > 0) { // Also check
 }
 
 console.log('DEBUG: Sentry.Handlers after init block:', Sentry.Handlers);
+console.log('DEBUG: Handlers (explicit import) after init block:', Handlers);
 
 const app = express();
 
