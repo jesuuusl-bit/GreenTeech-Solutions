@@ -39,6 +39,10 @@ app.get('/health', (req, res) => {
 
 const PORT = process.env.PORT || 5002;
 
-app.listen(PORT, () => {
-  console.log(`🚀 Projects Service corriendo en puerto ${PORT}`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`🚀 Projects Service corriendo en puerto ${PORT}`);
+  });
+}
+
+module.exports = app;

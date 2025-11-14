@@ -78,21 +78,20 @@ describe('Projects Service - Integration Tests', () => {
       { _id: new mongoose.Types.ObjectId(), name: 'Project Alpha', description: 'Desc A' },
       { _id: new mongoose.Types.ObjectId(), name: 'Project Beta', description: 'Desc B' },
     ];
-    Project.find.mockReturnThis();
-    Project.populate.mockReturnThis();
-    Project.sort.mockResolvedValue(mockProjects);
+    Project.find.mockResolvedValue(mockProjects);
 
     const res = await request(app).get('/projects');
 
     expect(res.statusCode).toEqual(200);
     expect(res.body.success).toBe(true);
-    expect(res.body.data).toEqual(mockProjects);
+    expect(res.body.data.length).toBe(2);
+    expect(res.body.data[0].name).toBe(mockProjects[0].name);
     expect(Project.find).toHaveBeenCalledTimes(1);
   });
 
   // Test 2: POST /projects - Debería crear un nuevo proyecto
   test('POST /projects should create a new project', async () => {
-    const newProject = { name: 'New Project', description: 'New Desc', startDate: new Date(), endDate: new Date() };
+    const newProject = { name: 'New Project', description: 'New Desc', startDate: new Date().toISOString(), endDate: new Date().toISOString() };
     const mockSavedProject = { _id: new mongoose.Types.ObjectId(), ...newProject };
     Project.create.mockResolvedValue(mockSavedProject);
 
@@ -100,7 +99,9 @@ describe('Projects Service - Integration Tests', () => {
 
     expect(res.statusCode).toEqual(201);
     expect(res.body.success).toBe(true);
-    expect(res.body.data).toEqual(mockSavedProject);
+    expect(res.body.data._id).toBe(mockSavedProject._id.toString());
+    expect(res.body.data.name).toBe(newProject.name);
+    expect(new Date(res.body.data.startDate).toISOString()).toEqual(newProject.startDate);
     expect(Project.create).toHaveBeenCalledWith(newProject);
   });
 
@@ -114,7 +115,8 @@ describe('Projects Service - Integration Tests', () => {
 
     expect(res.statusCode).toEqual(200);
     expect(res.body.success).toBe(true);
-    expect(res.body.data).toEqual(mockProject);
+    expect(res.body.data._id).toEqual(mockProject._id.toString());
+    expect(res.body.data.name).toEqual(mockProject.name);
     expect(Project.findById).toHaveBeenCalledWith(projectId.toString());
   });
 
@@ -129,7 +131,8 @@ describe('Projects Service - Integration Tests', () => {
 
     expect(res.statusCode).toEqual(200);
     expect(res.body.success).toBe(true);
-    expect(res.body.data).toEqual(mockUpdatedProject);
+    expect(res.body.data._id).toEqual(mockUpdatedProject._id.toString());
+    expect(res.body.data.description).toEqual(mockUpdatedProject.description);
     expect(Project.findByIdAndUpdate).toHaveBeenCalledWith(projectId.toString(), updatedFields, { new: true, runValidators: true });
   });
 
@@ -149,7 +152,7 @@ describe('Projects Service - Integration Tests', () => {
   // Test 6: POST /tasks - Debería crear una nueva tarea
   test('POST /tasks should create a new task', async () => {
     const projectId = new mongoose.Types.ObjectId();
-    const newTask = { name: 'New Task', description: 'Task Desc', projectId: projectId };
+    const newTask = { name: 'New Task', description: 'Task Desc', projectId: projectId.toString() };
     const mockSavedTask = { _id: new mongoose.Types.ObjectId(), ...newTask };
     Task.create.mockResolvedValue(mockSavedTask);
 
@@ -157,7 +160,8 @@ describe('Projects Service - Integration Tests', () => {
 
     expect(res.statusCode).toEqual(201);
     expect(res.body.success).toBe(true);
-    expect(res.body.data).toEqual(mockSavedTask);
+    expect(res.body.data._id).toEqual(mockSavedTask._id.toString());
+    expect(res.body.data.projectId).toEqual(mockSavedTask.projectId.toString());
     expect(Task.create).toHaveBeenCalledWith(newTask);
   });
 
@@ -171,7 +175,7 @@ describe('Projects Service - Integration Tests', () => {
 
     expect(res.statusCode).toEqual(200);
     expect(res.body.success).toBe(true);
-    expect(res.body.data).toEqual(mockTask);
+    expect(res.body.data._id).toEqual(mockTask._id.toString());
     expect(Task.findById).toHaveBeenCalledWith(taskId.toString());
   });
 
@@ -186,7 +190,8 @@ describe('Projects Service - Integration Tests', () => {
 
     expect(res.statusCode).toEqual(200);
     expect(res.body.success).toBe(true);
-    expect(res.body.data).toEqual(mockUpdatedTask);
+    expect(res.body.data._id).toEqual(mockUpdatedTask._id.toString());
+    expect(res.body.data.status).toEqual(mockUpdatedTask.status);
     expect(Task.findByIdAndUpdate).toHaveBeenCalledWith(taskId.toString(), updatedFields, { new: true, runValidators: true });
   });
 

@@ -3,6 +3,7 @@ const router = express.Router();
 const {
   createTask,
   getTasksByProject,
+  getTaskById,
   updateTask,
   deleteTask,
   addComment
@@ -10,6 +11,7 @@ const {
 
 router.post('/', createTask);
 router.get('/project/:projectId', getTasksByProject);
+router.get('/:id', getTaskById);
 router.put('/:id', updateTask);
 router.delete('/:id', deleteTask);
 router.post('/:id/comments', addComment);
