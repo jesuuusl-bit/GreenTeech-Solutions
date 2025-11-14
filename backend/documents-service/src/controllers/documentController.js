@@ -1,6 +1,6 @@
 const Document = require('../models/Document');
 const mongoose = require('mongoose');
-const { gfs } = require('../server'); // Import gfs from server.js
+const { getGfs } = require('../server'); // Import getGfs from server.js
 
 // Obtener todos los documentos
 exports.getAllDocuments = async (req, res) => {
@@ -88,6 +88,11 @@ exports.uploadDocument = async (req, res) => {
       return res.status(400).json({ success: false, message: 'No se ha proporcionado ningún archivo.' });
     }
 
+    const gfs = getGfs(); // Get the initialized gfs instance
+    if (!gfs) {
+      return res.status(500).json({ success: false, message: 'GridFS no inicializado en el controlador.' });
+    }
+
     // Upload file to GridFS
     const uploadStream = gfs.openUploadStream(req.file.originalname, {
       contentType: req.file.mimetype,
@@ -98,8 +103,6 @@ exports.uploadDocument = async (req, res) => {
         type: req.body.type || 'other',
       }
     });
-
-    uploadStream.end(req.file.buffer);
 
     uploadStream.on('error', (error) => {
       console.error('Error uploading to GridFS:', error);
@@ -129,6 +132,8 @@ exports.uploadDocument = async (req, res) => {
       });
     });
 
+    uploadStream.end(req.file.buffer);
+
   } catch (error) {
     console.error('Error al subir documento:', error);
     res.status(500).json({
@@ -148,8 +153,9 @@ exports.downloadDocument = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Documento no encontrado.' });
     }
 
+    const gfs = getGfs(); // Get the initialized gfs instance
     if (!gfs) {
-      return res.status(500).json({ success: false, message: 'GridFS no inicializado.' });
+      return res.status(500).json({ success: false, message: 'GridFS no inicializado en el controlador.' });
     }
 
     const downloadStream = gfs.openDownloadStream(document.gridfsId);
