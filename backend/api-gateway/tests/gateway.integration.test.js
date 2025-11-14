@@ -3,6 +3,15 @@ process.env.JWT_SECRET = 'test_jwt_secret';
 process.env.USERS_SERVICE_URL = 'http://localhost:5001'; // Mock user service URL
 process.env.DOCUMENTS_SERVICE_URL = 'http://localhost:5005'; // Mock documents service URL
 
+jest.mock('@sentry/node', () => ({
+  init: jest.fn(),
+  Handlers: {
+    requestHandler: jest.fn(() => (req, res, next) => next()), // Mock as a no-op middleware
+    errorHandler: jest.fn(() => (err, req, res, next) => next(err)), // Mock as a no-op error middleware
+  },
+  captureException: jest.fn(),
+})); // Mock Sentry
+
 const request = require('supertest');
 const app = require('../src/app'); // Importa tu app Express desde el nuevo app.js
 const services = require('../src/config/services'); // Para acceder a las URLs de los servicios
