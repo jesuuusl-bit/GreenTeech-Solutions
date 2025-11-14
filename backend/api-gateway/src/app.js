@@ -11,10 +11,15 @@ const errorHandler = require('./middleware/errorHandler');
 require('dotenv').config();
 
 const Sentry = require('@sentry/node');
-Sentry.init({
-  dsn: process.env.SENTRY_DSN,
-  tracesSampleRate: 1.0,
-});
+
+if (process.env.SENTRY_DSN) {
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    tracesSampleRate: 1.0,
+  });
+} else {
+  console.warn('SENTRY_DSN no está configurado. Sentry no se inicializará.');
+}
 
 const app = express();
 
