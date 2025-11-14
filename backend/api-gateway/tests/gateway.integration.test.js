@@ -85,7 +85,7 @@ describe('API Gateway - Integration Tests', () => {
       const { method, url, data } = config;
 
       if (method === 'GET') {
-        if (url.includes('/health')) {
+        if (url === `${services.USERS_SERVICE}/health`) {
           return Promise.resolve({ status: 200, data: { status: 'healthy', service: 'users-service' }, headers: {} });
         }
         if (url.includes('/users')) {
