@@ -11,7 +11,7 @@ const errorHandler = require('./middleware/errorHandler');
 require('dotenv').config();
 
 const Sentry = require('@sentry/node');
-const { Handlers } = require('@sentry/node/cjs/handlers'); // Explicitly import Handlers from cjs path
+const { Handlers } = require('@sentry/node'); // Revert to direct import from @sentry/node
 
 console.log('DEBUG: process.env.SENTRY_DSN:', process.env.SENTRY_DSN);
 
@@ -63,7 +63,8 @@ app.use(cors({
     
     if (isAllowed) {
       callback(null, true);
-    } else {
+    }
+    else {
       console.warn(`⚠️ CORS bloqueado para origen: ${origin}`);
       callback(new Error('No permitido por CORS'));
     }
@@ -81,7 +82,11 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 if (process.env.SENTRY_DSN && process.env.SENTRY_DSN.length > 0) {
   // Sentry request handler must be the first middleware on the app
-  app.use(Sentry.Handlers.requestHandler());
+  if (Handlers && Handlers.requestHandler) { // Add a check here
+    app.use(Handlers.requestHandler());
+  } else {
+    console.error('ERROR: Sentry Handlers.requestHandler is undefined even after Sentry.init().');
+  }
 }
 
 // Rate limiting global
@@ -109,8 +114,12 @@ app.all('*', (req, res) => {
 });
 
 if (process.env.SENTRY_DSN && process.env.SENTRY_DSN.length > 0) {
-  // Manejo global de errores de Sentry
-  app.use(Sentry.Handlers.errorHandler());
+  if (Handlers && Handlers.errorHandler) { // Add a check here
+    // Manejo global de errores de Sentry
+    app.use(Handlers.errorHandler());
+  } else {
+    console.error('ERROR: Sentry Handlers.errorHandler is undefined even after Sentry.init().');
+  }
 }
 
 // Manejo global de errores
