@@ -78,8 +78,10 @@ app.use(morgan('dev'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Sentry request handler must be the first middleware on the app
-app.use(Sentry.Handlers.requestHandler());
+if (process.env.SENTRY_DSN && process.env.SENTRY_DSN.length > 0) {
+  // Sentry request handler must be the first middleware on the app
+  app.use(Sentry.Handlers.requestHandler());
+}
 
 // Rate limiting global
 app.use('/api/', limiter);
@@ -105,8 +107,12 @@ app.all('*', (req, res) => {
   });
 });
 
+if (process.env.SENTRY_DSN && process.env.SENTRY_DSN.length > 0) {
+  // Manejo global de errores de Sentry
+  app.use(Sentry.Handlers.errorHandler());
+}
+
 // Manejo global de errores
-app.use(Sentry.Handlers.errorHandler());
 app.use(errorHandler);
 
 module.exports = app;
