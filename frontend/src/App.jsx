@@ -25,10 +25,6 @@ import PredictivePage from './components/predictive/PredictivePage';
 import DocumentsPage from './components/documents/DocumentsPage';
 import UsersPage from './components/users/UsersPage';
 
-//import sentry
-import * as Sentry from "@sentry/react";
-import ErrorButton from './components/ErrorButton'; // Import ErrorButton
-
 export default function App() {
   return (
     <AuthProvider>
@@ -42,11 +38,7 @@ export default function App() {
           
           <Route 
             path="/dashboard" 
-            element={
-              <Dashboard>
-                <ErrorButton /> {/* Render ErrorButton inside Dashboard */}
-              </Dashboard>
-            } 
+            element={<Dashboard />} 
           />
 
           <Route 
