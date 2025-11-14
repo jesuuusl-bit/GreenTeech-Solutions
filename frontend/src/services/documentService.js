@@ -74,6 +74,35 @@ const documentService = {
       throw error;
     }
   },
+
+  // Descargar un documento por su ID
+  downloadDocument: async (id, fileName) => {
+    try {
+      console.log(`⬇️ Downloading document with ID: ${id}...`);
+      const response = await api.get(`/documents/${id}/download`, {
+        responseType: 'blob', // Important: responseType must be 'blob' for file downloads
+      });
+
+      // Create a blob from the response data
+      const fileBlob = new Blob([response.data], { type: response.headers['content-type'] });
+
+      // Create a link element, set its href to the blob URL, and click it to trigger download
+      const fileUrl = window.URL.createObjectURL(fileBlob);
+      const link = document.createElement('a');
+      link.href = fileUrl;
+      link.setAttribute('download', fileName); // Use the provided fileName for download
+      document.body.appendChild(link);
+      link.click();
+      link.remove(); // Clean up the DOM
+      window.URL.revokeObjectURL(fileUrl); // Release the object URL
+
+      console.log('✅ Document downloaded successfully');
+      return { success: true, message: 'Document downloaded successfully' };
+    } catch (error) {
+      console.error(`❌ Error downloading document ${id}:`, error);
+      throw error;
+    }
+  },
 };
 
 export default documentService;

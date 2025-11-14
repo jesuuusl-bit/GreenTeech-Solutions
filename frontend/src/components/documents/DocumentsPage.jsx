@@ -91,8 +91,13 @@ export default function DocumentsPage() {
     }
   };
 
-  const handleDownload = (url, filename) => {
-    window.open(url, '_blank');
+  const handleDownload = async (id, fileName) => {
+    try {
+      await documentService.downloadDocument(id, fileName);
+      toast.success('Documento descargado exitosamente!');
+    } catch (err) {
+      toast.error('Error al descargar el documento.');
+    }
   };
 
   if (loading) {
@@ -191,22 +196,20 @@ export default function DocumentsPage() {
                   <div className="flex items-center mb-2 md:mb-0">
                     <FileText className="h-6 w-6 text-emerald-600 mr-3" />
                     <div>
-                      <p className="text-lg font-medium text-gray-900">{doc.filename}</p>
+                      <p className="text-lg font-medium text-gray-900">{doc.fileName}</p>
                       <p className="text-sm text-gray-600">
-                        Subido el: {new Date(doc.uploadDate).toLocaleDateString('es-ES')}
+                        Subido el: {new Date(doc.createdAt).toLocaleDateString('es-ES')}
                       </p>
                     </div>
                   </div>
                   <div className="flex space-x-3 mt-3 md:mt-0">
-                    {doc.url && (
                       <button
-                        onClick={() => handleDownload(doc.url, doc.filename)}
+                        onClick={() => handleDownload(doc._id, doc.fileName)}
                         className="btn-secondary flex items-center"
                       >
                         <Download className="h-4 w-4 mr-2" />
                         Descargar
                       </button>
-                    )}
                     <button
                       onClick={() => handleDelete(doc._id)}
                       className="btn-danger flex items-center"

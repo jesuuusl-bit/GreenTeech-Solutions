@@ -19,12 +19,9 @@ const documentSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  fileUrl: {
-    type: String,
+  gridfsId: { // New field to store GridFS file ID
+    type: mongoose.Schema.Types.ObjectId,
     required: true
-  },
-  fileSize: {
-    type: Number
   },
   projectId: {
     type: mongoose.Schema.Types.ObjectId,

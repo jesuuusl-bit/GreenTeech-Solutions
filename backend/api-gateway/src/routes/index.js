@@ -2,16 +2,17 @@
 const express = require('express');
 const axios = require('axios');
 const router = express.Router();
-const { createProxyMiddleware } = require('http-proxy-middleware'); // Import createProxyMiddleware
 const { authenticate, restrictTo } = require('../middleware/auth');
 const { authLimiter } = require('../middleware/rateLimiter');
 const services = require('../config/services');
-// Removed FormData and upload imports as they are no longer needed for documents proxy
+const FormData = require('form-data'); // Import form-data
+const multer = require('multer'); // Import multer
+const upload = multer({ storage: multer.memoryStorage() }); // Initialize multer
 
 // Función helper para proxy de requests (para rutas no-documentos)
-const proxyRequest = async (req, res, serviceUrl) => {
+const proxyRequest = async (req, res, serviceUrl, customPath = null, file = null, body = {}) => {
   try {
-    const targetPath = req.originalUrl.replace('/api', '');
+    const targetPath = customPath || req.originalUrl.replace('/api', '');
     const fullUrl = `${serviceUrl}${targetPath}`;
     
     console.log(`📡 Proxy request: ${req.method} ${fullUrl}`);
@@ -34,7 +35,10 @@ const proxyRequest = async (req, res, serviceUrl) => {
     const headersToForward = {};
     for (const key in req.headers) {
       // Exclude content-length and transfer-encoding from being forwarded
-      if (key.toLowerCase() !== 'content-length' && key.toLowerCase() !== 'transfer-encoding' && Object.prototype.hasOwnProperty.call(req.headers, key)) {
+      // Also exclude content-type if it's multipart/form-data, as form-data will set it
+      if (key.toLowerCase() !== 'content-length' && key.toLowerCase() !== 'transfer-encoding' && 
+          (key.toLowerCase() !== 'content-type' || !file) && // Use 'file' argument here
+          Object.prototype.hasOwnProperty.call(req.headers, key)) {
         headersToForward[key] = req.headers[key];
       }
     }
@@ -49,17 +53,48 @@ const proxyRequest = async (req, res, serviceUrl) => {
       ...(req.user && { 'x-user-id': req.user.id, 'x-user-role': req.user.role })
     };
 
-    if (req.body && Object.keys(req.body).length > 0) {
+    // Handle multipart/form-data
+    if (file) { // Check if file is explicitly passed
+      const formData = new FormData(); // Renamed to formData to avoid conflict with global FormData
+
+      // Append fields
+      for (const key in body) { // Use passed body
+        if (Object.prototype.hasOwnProperty.call(body, key)) {
+          formData.append(key, body[key]);
+        }
+      }
+
+      // Append file
+      formData.append(file.fieldname, file.buffer, {
+        filename: file.originalname,
+        contentType: file.mimetype,
+      });
+
+      config.data = formData;
+      config.headers = { ...config.headers, ...formData.getHeaders() };
+    } else if (body && Object.keys(body).length > 0) { // Use passed body
+      config.data = body;
+    } else if (req.body && Object.keys(req.body).length > 0) { // Fallback to req.body if no explicit body
       config.data = req.body;
     }
     
     const response = await axios(config);
     
+    // Forward all headers from the proxied response
     Object.keys(response.headers).forEach(key => {
       res.setHeader(key, response.headers[key]);
     });
-    
-    res.status(response.status).json(response.data);
+
+    // Check if the response is a file download
+    const contentType = response.headers['content-type'];
+    if (contentType && (contentType.includes('application/') || contentType.includes('image/') || contentType.includes('text/plain'))) {
+      // For file downloads, stream the data directly
+      res.status(response.status);
+      response.data.pipe(res); // Assuming response.data is a stream for file downloads
+    } else {
+      // For other responses, send as JSON
+      res.status(response.status).json(response.data);
+    }
   } catch (error) {
     console.error(`❌ Proxy error: ${error.message}`);
     
@@ -103,13 +138,9 @@ router.post('/users/register', authenticate, restrictTo('admin'), (req, res) =>
 
 // ========== RUTAS DE USUARIOS ==========
 // Specific health check for users service
-router.get('/users/health', createProxyMiddleware({
-  target: services.USERS_SERVICE,
-  changeOrigin: true,
-  pathRewrite: {
-    '^/api/users/health': '/health',
-  },
-}));
+router.get('/users/health', (req, res) => 
+  proxyRequest(req, res, services.USERS_SERVICE, '/health')
+);
 
 router.use('/users', authenticate, (req, res) => 
   proxyRequest(req, res, services.USERS_SERVICE)
@@ -143,32 +174,22 @@ router.use('/simulations', authenticate, (req, res) =>
 );
 
 // ========== RUTAS DE DOCUMENTOS ==========
-const documentsProxy = createProxyMiddleware({
-  target: services.DOCUMENTS_SERVICE,
-  changeOrigin: true,
-  pathRewrite: {
-    '^/api': '', // reescribe /api/documents a /documents
-  },
-  onProxyReq: (proxyReq, req, res) => {
-    // Añadir headers de usuario si están disponibles
-    if (req.user) {
-      proxyReq.setHeader('x-user-id', req.user.id);
-      proxyReq.setHeader('x-user-role', req.user.role);
-    }
-    // Para multipart/form-data, http-proxy-middleware maneja el stream automáticamente
-    // No necesitamos hacer nada especial aquí, solo asegurarnos de que el Content-Type original se mantenga
-    // y que el body no haya sido consumido por otros middlewares antes de este proxy.
-  },
-  onError: (err, req, res) => {
-    console.error('❌ Proxy error for documents service:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Error al comunicarse con el servicio de documentos',
-      error: err.message
-    });
-  }
+// Specific route for document upload
+router.post('/documents/upload', upload.single('document'), authenticate, (req, res) => {
+  proxyRequest(req, res, services.DOCUMENTS_SERVICE, req.url, req.file, req.body);
 });
 
-router.use('/documents', authenticate, documentsProxy); // Aplicar autenticación y luego el proxy
+// Specific route for document download
+router.get('/documents/:id/download', authenticate, (req, res) => {
+  // Construct the target URL for the documents-service
+  const documentId = req.params.id;
+  const customPath = `/documents/${documentId}/download`; // This is the path expected by documents-service
+  proxyRequest(req, res, services.DOCUMENTS_SERVICE, customPath, req.file, req.body);
+});
+
+// General documents routes (if any, without upload.single)
+router.use('/documents', authenticate, (req, res) => 
+  proxyRequest(req, res, services.DOCUMENTS_SERVICE, req.url, req.file, req.body)
+);
 
 module.exports = router;

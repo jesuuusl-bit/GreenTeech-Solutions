@@ -8,7 +8,19 @@ require('dotenv').config();
 const app = express();
 
 // Conectar a base de datos
-connectDB();
+let gfs; // Variable para GridFS
+const connection = connectDB(); // Capture the connection promise
+
+connection.then(conn => {
+  if (conn) {
+    gfs = new mongoose.mongo.GridFSBucket(conn.db, {
+      bucketName: 'uploads'
+    });
+    console.log('✅ GridFS inicializado');
+  }
+}).catch(err => {
+  console.error('❌ Error al inicializar GridFS:', err.message);
+});
 
 // Importar rutas
 const documentRoutes = require('./routes/documentRoutes');
@@ -67,3 +79,4 @@ if (require.main === module) {
 }
 
 module.exports = app;
+module.exports.gfs = gfs; // Export gfs

@@ -5,9 +5,11 @@ const {
   getDocumentsByProjectId,
   createDocument,
   uploadDocument,
+  downloadDocument, // Import the new downloadDocument function
   testMongoDB
 } = require('../controllers/documentController');
-const upload = require('../middleware/upload'); // Importar el middleware de Multer
+const multer = require('multer'); // Import multer
+const upload = multer({ storage: multer.memoryStorage() }); // Initialize multer
 
 // GET /api/documents - Obtener todos los documentos
 router.get('/', getAllDocuments);
@@ -20,6 +22,9 @@ router.post('/', createDocument);
 
 // POST /api/documents/upload - Subir un documento con Multer
 router.post('/upload', upload.single('document'), uploadDocument);
+
+// GET /api/documents/:id/download - Descargar un documento
+router.get('/:id/download', downloadDocument);
 
 // GET /api/documents/test - Endpoint de prueba para activar MongoDB
 router.get('/test', testMongoDB);
