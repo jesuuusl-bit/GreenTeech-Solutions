@@ -21,6 +21,27 @@ exports.getAllDocuments = async (req, res) => {
   }
 };
 
+// Obtener documentos por ID de proyecto
+exports.getDocumentsByProjectId = async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const documents = await Document.find({ projectId })
+      .populate('uploadedBy', 'name email')
+      .sort({ createdAt: -1 });
+    
+    res.json({
+      success: true,
+      data: documents
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error al obtener documentos por proyecto',
+      error: error.message
+    });
+  }
+};
+
 // Crear nuevo documento (placeholder, la subida real se hará con Multer)
 exports.createDocument = async (req, res) => {
   try {
