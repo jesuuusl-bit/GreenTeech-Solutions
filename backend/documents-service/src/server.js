@@ -26,16 +26,6 @@ app.use(reconstructUser); // Added this line
 // API Routes
 app.use('/documents', documentRoutes);
 
-// Routes
-app.get('/', (req, res) => {
-  res.json({
-    success: true,
-    service: 'documents-service',
-    message: 'Servicio de gestión documental funcionando',
-    version: '1.0.0'
-  });
-});
-
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({
