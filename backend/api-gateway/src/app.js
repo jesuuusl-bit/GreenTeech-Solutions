@@ -12,14 +12,19 @@ require('dotenv').config();
 
 const Sentry = require('@sentry/node');
 
-if (process.env.SENTRY_DSN) {
+console.log('DEBUG: process.env.SENTRY_DSN:', process.env.SENTRY_DSN);
+
+if (process.env.SENTRY_DSN && process.env.SENTRY_DSN.length > 0) { // Also check for empty string
   Sentry.init({
     dsn: process.env.SENTRY_DSN,
     tracesSampleRate: 1.0,
   });
+  console.log('DEBUG: Sentry.init() called.');
 } else {
-  console.warn('SENTRY_DSN no está configurado. Sentry no se inicializará.');
+  console.warn('SENTRY_DSN no está configurado o está vacío. Sentry no se inicializará.');
 }
+
+console.log('DEBUG: Sentry.Handlers after init block:', Sentry.Handlers);
 
 const app = express();
 
