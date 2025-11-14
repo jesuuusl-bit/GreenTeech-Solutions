@@ -103,9 +103,13 @@ router.post('/users/register', authenticate, restrictTo('admin'), (req, res) =>
 
 // ========== RUTAS DE USUARIOS ==========
 // Specific health check for users service
-router.get('/users/health', (req, res) => {
-  proxyRequest(req, res, services.USERS_SERVICE); // Corrected: remove '/health' here
-});
+router.get('/users/health', createProxyMiddleware({
+  target: services.USERS_SERVICE,
+  changeOrigin: true,
+  pathRewrite: {
+    '^/api/users/health': '/health',
+  },
+}));
 
 router.use('/users', authenticate, (req, res) => 
   proxyRequest(req, res, services.USERS_SERVICE)
@@ -143,7 +147,7 @@ const documentsProxy = createProxyMiddleware({
   target: services.DOCUMENTS_SERVICE,
   changeOrigin: true,
   pathRewrite: {
-    '^/api/documents': '', // reescribe /api/documents a /
+    '^/': '/documents/', // reescribe la raíz a /documents/
   },
   onProxyReq: (proxyReq, req, res) => {
     // Añadir headers de usuario si están disponibles
