@@ -9,6 +9,7 @@ import {
 import { Link, useNavigate } from 'react-router-dom';
 import KPICard from './KPICard';
 import toast from 'react-hot-toast';
+import ErrorButton from '../ErrorButton'; // Import ErrorButton
 
 export default function Dashboard() {
   const { user, logout, isAuthenticated, loading: authLoading } = useAuth();
@@ -216,6 +217,12 @@ export default function Dashboard() {
                 <p className="text-sm text-gray-600">Simulaciones y predicciones</p>
               </Link>
             </div>
+          </div>
+
+          {/* Sentry Test Button */}
+          <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">Sentry Test</h2>
+            <ErrorButton />
           </div>
 
           {/* Recent Projects Table */}
