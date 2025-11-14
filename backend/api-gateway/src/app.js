@@ -11,7 +11,7 @@ const errorHandler = require('./middleware/errorHandler');
 require('dotenv').config();
 
 const Sentry = require('@sentry/node');
-const { Handlers } = require('@sentry/node'); // Explicitly import Handlers
+const { Handlers } = require('@sentry/node/cjs/handlers'); // Explicitly import Handlers from cjs path
 
 console.log('DEBUG: process.env.SENTRY_DSN:', process.env.SENTRY_DSN);
 
