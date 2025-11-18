@@ -79,7 +79,8 @@ describe('Projects Service - Integration Tests', () => {
       { _id: new mongoose.Types.ObjectId(), name: 'Project Beta', description: 'Desc B' },
     ];
     const mockQuery = {
-      sort: jest.fn().mockResolvedValue(mockProjects),
+      sort: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockResolvedValue(mockProjects),
     };
     Project.find.mockReturnValue(mockQuery);
 
