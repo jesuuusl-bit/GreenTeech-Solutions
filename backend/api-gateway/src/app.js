@@ -38,6 +38,7 @@ app.set('trust proxy', 1);
 app.use(helmet());
 app.use(cors({
   origin: function(origin, callback) {
+    console.log(`[CORS] Origin: ${origin}`); // Log para depuración
     // Permitir requests sin origin (como apps móviles o Postman)
     if (!origin) return callback(null, true);
     
