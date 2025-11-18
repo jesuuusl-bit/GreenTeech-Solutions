@@ -31,5 +31,10 @@ export const projectService = {
   getStats: async () => {
     const response = await api.get('/projects/stats');
     return response.data;
+  },
+
+  getRecentProjects: async (limit = 5) => {
+    const response = await api.get(`/projects?sortBy=-createdAt&limit=${limit}`);
+    return response.data;
   }
 };
