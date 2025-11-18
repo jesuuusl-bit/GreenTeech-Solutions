@@ -28,7 +28,7 @@ const proxyRequest = async (req, res, serviceUrl, customPath = null, file = null
         // Forward user info from API Gateway to microservice
         ...(req.user && { 'x-user-id': req.user.id, 'x-user-role': req.user.role })
       },
-      timeout: 30000, // 30 segundos
+      timeout: 120000, // 120 segundos
       validateStatus: () => true // Aceptar cualquier status code
     };
 
