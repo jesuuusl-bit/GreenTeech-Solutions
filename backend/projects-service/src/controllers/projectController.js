@@ -20,7 +20,7 @@ exports.createProject = async (req, res) => {
 
 exports.getAllProjects = async (req, res) => {
   try {
-    const { status, type, priority, search } = req.query;
+    const { status, type, priority, search, sortBy, limit } = req.query;
     
     const filter = {};
     if (status) filter.status = status;
@@ -33,7 +33,24 @@ exports.getAllProjects = async (req, res) => {
       ];
     }
 
-    const projects = await Project.find(filter);
+    let query = Project.find(filter);
+
+    // Sorting
+    if (sortBy) {
+      const sortOrder = sortBy.startsWith('-') ? -1 : 1;
+      const sortField = sortBy.replace(/^-/, '');
+      query = query.sort({ [sortField]: sortOrder });
+    } else {
+      // Default sort by creation date descending
+      query = query.sort({ createdAt: -1 });
+    }
+
+    // Limiting
+    if (limit) {
+      query = query.limit(parseInt(limit, 10));
+    }
+
+    const projects = await query;
     
     res.status(200).json({
       success: true,
