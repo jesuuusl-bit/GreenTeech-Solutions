@@ -14,7 +14,6 @@ export default function Dashboard() {
   const { user, logout, isAuthenticated, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
-  const [recentProjects, setRecentProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   
@@ -22,27 +21,23 @@ export default function Dashboard() {
   const debugInfo = debugAuth();
 
   useEffect(() => {
-    loadDashboardData();
+    loadStats();
   }, []);
 
-  const loadDashboardData = async () => {
+  const loadStats = async () => {
     try {
-      const [statsResponse, recentProjectsResponse] = await Promise.all([
-        projectService.getStats(),
-        projectService.getRecentProjects(5) // Fetch 5 recent projects
-      ]);
-      setStats(statsResponse.data);
-      setRecentProjects(recentProjectsResponse.data);
+      const response = await projectService.getStats();
+      setStats(response.data);
     } catch (error) {
-      console.error('Error al cargar datos del dashboard:', error);
-      toast.error('Error al cargar datos del dashboard');
+      console.error('Error al cargar estadísticas:', error);
+      // No mostrar toast de error para evitar spam, solo log
+      // toast.error('Error al cargar estadísticas');
       // Usar datos por defecto si falla
       setStats({
         total: 0,
         completed: 0,
         byStatus: []
       });
-      setRecentProjects([]);
     } finally {
       setLoading(false);
     }
@@ -226,62 +221,13 @@ export default function Dashboard() {
           {/* Recent Projects Table */}
           <div className="bg-white rounded-xl shadow-sm p-6">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Proyectos Recientes</h2>
-            {recentProjects.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Nombre del Proyecto
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Estado
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Fecha de Creación
-                      </th>
-                      <th scope="col" className="relative px-6 py-3">
-                        <span className="sr-only">Ver</span>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {recentProjects.map((project) => (
-                      <tr key={project._id}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {project.name}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            project.status === 'completed' ? 'bg-green-100 text-green-800' :
-                            project.status === 'in-progress' ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-gray-100 text-gray-800'
-                          }`}>
-                            {project.status}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {new Date(project.createdAt).toLocaleDateString()}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <Link to={`/projects/${project._id}`} className="text-green-600 hover:text-green-900">
-                            Ver
-                          </Link>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="text-center py-8 text-gray-500">
-                <FolderKanban className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                <p>No hay proyectos recientes para mostrar</p>
-                <Link to="/projects" className="text-green-600 hover:underline mt-2 inline-block">
-                  Ver todos los proyectos
-                </Link>
-              </div>
-            )}
+            <div className="text-center py-8 text-gray-500">
+              <FolderKanban className="w-12 h-12 mx-auto mb-2 opacity-50" />
+              <p>No hay proyectos recientes para mostrar</p>
+              <Link to="/projects" className="text-green-600 hover:underline mt-2 inline-block">
+                Ver todos los proyectos
+              </Link>
+            </div>
           </div>
         </div>
       </main>
