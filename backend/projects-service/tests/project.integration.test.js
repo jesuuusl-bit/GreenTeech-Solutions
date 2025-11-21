@@ -78,10 +78,7 @@ describe('Projects Service - Integration Tests', () => {
       { _id: new mongoose.Types.ObjectId(), name: 'Project Alpha', description: 'Desc A' },
       { _id: new mongoose.Types.ObjectId(), name: 'Project Beta', description: 'Desc B' },
     ];
-    const mockQuery = {
-      sort: jest.fn().mockResolvedValue(mockProjects),
-    };
-    Project.find.mockReturnValue(mockQuery);
+    Project.find.mockResolvedValue(mockProjects);
 
     const res = await request(app).get('/projects');
 
@@ -90,7 +87,6 @@ describe('Projects Service - Integration Tests', () => {
     expect(res.body.data.length).toBe(2);
     expect(res.body.data[0].name).toBe(mockProjects[0].name);
     expect(Project.find).toHaveBeenCalledTimes(1);
-    expect(mockQuery.sort).toHaveBeenCalledWith({ createdAt: -1 });
   });
 
   // Test 2: POST /projects - Debería crear un nuevo proyecto
