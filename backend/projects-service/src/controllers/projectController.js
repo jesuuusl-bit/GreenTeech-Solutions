@@ -46,8 +46,9 @@ exports.getAllProjects = async (req, res) => {
     }
 
     // Limiting
-    const limitValue = parseInt(limit, 10) || 100; // Default limit to 100
-    query = query.limit(limitValue);
+    if (limit) {
+      query = query.limit(parseInt(limit, 10));
+    }
 
     const projects = await query;
     
