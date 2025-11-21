@@ -50,9 +50,7 @@ exports.getPrediction = async (req, res) => {
     const newPrediction = new Prediction({
       projectId: new mongoose.Types.ObjectId('60d5ec49f8c7a10015a4b7a1'), // Placeholder projectId
       predictionType: 'weather', // This prediction is based on weather data
-      data: { city, temp, weatherDescription, rainProbability, windIntensity },
-      predictedValue: predictedValue,
-      timestamp: new Date(),
+      data: { city, temp, weatherDescription, rainProbability, windIntensity, predictedValue },
     });
     await newPrediction.save();
 
@@ -75,7 +73,7 @@ exports.getPrediction = async (req, res) => {
 // Controlador para obtener datos históricos (ejemplo)
 exports.getHistoricalData = async (req, res) => {
   try {
-    const historicalData = await Prediction.find().sort({ timestamp: -1 }).limit(10);
+    const historicalData = await Prediction.find().sort({ createdAt: -1 }).limit(10);
     res.status(200).json(historicalData);
   } catch (error) {
     console.error('Error al obtener datos históricos:', error);
